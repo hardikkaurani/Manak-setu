@@ -46,5 +46,5 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
-
-ManakSetu/
+# Root level backup or duplicate folder
+/ManakSetu/
