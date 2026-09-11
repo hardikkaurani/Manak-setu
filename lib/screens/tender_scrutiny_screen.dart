@@ -9,13 +9,22 @@ import '../theme/app_text_styles.dart';
 import '../data/demo_data.dart';
 import '../models/compliance_finding.dart';
 import '../models/tender_analysis.dart';
+import '../models/requirement.dart';
+import '../models/review_action.dart';
+import '../models/knowledge_state.dart';
+import '../repositories/standards_repository.dart';
 import '../widgets/section_card.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/knowledge_state_badge.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 import '../widgets/audit_scorecard.dart';
 import '../widgets/evidence_sheet.dart';
 import '../widgets/image_clause_analyzer.dart';
+import '../widgets/boq_audit_card.dart';
+import '../widgets/decision_trace_sheet.dart';
+import '../widgets/why_this_standard_sheet.dart';
+import '../services/workspace_controller.dart';
 
 /// Phase 2 Interactive Tender Scrutiny Screen.
 /// Provides deterministic offline statutory audit demonstration for the Substation Distribution Transformer preset.
@@ -38,25 +47,41 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
   // Analysis State
   bool _isAnalyzing = false;
   bool _hasAnalyzed = false;
+  bool _isBoQAnalysis = false;
   String _analysisProgressStep = '';
   final Set<int> _expandedFlags = {
     0,
     1,
     2,
+    46,
   }; // Expand all CVC flags by default for immediate visibility
 
   // File Upload State
   String? _uploadedFileName;
   int? _uploadedFileSize;
 
+  String _activeAnalysisPresetId = 'transformer';
+
   String get _currentPresetId =>
       DemoData.presets[_selectedPresetIndex]['id'] ?? 'transformer';
   TenderAnalysis get _currentAnalysis =>
-      DemoData.getAnalysisForPreset(_currentPresetId);
+      DemoData.getAnalysisForPreset(_activeAnalysisPresetId);
 
   @override
   void initState() {
     super.initState();
+    final activePid = WorkspaceController().activePresetId;
+    if (activePid == 'pipe') {
+      _selectedPresetIndex = 0;
+      _activeAnalysisPresetId = 'pipe';
+    } else if (activePid == 'steel') {
+      _selectedPresetIndex = 2;
+      _activeAnalysisPresetId = 'steel';
+    } else {
+      _selectedPresetIndex = 1;
+      _activeAnalysisPresetId = 'transformer';
+    }
+
     final initialPreset = DemoData.presets[_selectedPresetIndex];
     _categoryController = TextEditingController(text: initialPreset['title']);
     _departmentController = TextEditingController(
@@ -89,7 +114,10 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
     setState(() {
       _selectedPresetIndex = index;
       _hasAnalyzed = false;
+      _isBoQAnalysis = false;
       final preset = DemoData.presets[index];
+      _activeAnalysisPresetId = preset['id'] ?? 'transformer';
+      WorkspaceController().setActivePreset(preset['id']!);
       _categoryController.text = preset['title'] ?? '';
       _departmentController.text = preset['department'] ?? '';
       _clauseController.text = preset['clause'] ?? '';
@@ -99,6 +127,7 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
   void _resetInputForm() {
     setState(() {
       _selectedPresetIndex = 1; // Substation Distribution Transformer
+      _activeAnalysisPresetId = 'transformer';
       _hasAnalyzed = false;
       _isAnalyzing = false;
       final preset = DemoData.presets[1];
@@ -122,6 +151,7 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
     setState(() {
       _clauseController.text = DemoData.rectifiedTransformerClause;
       _categoryController.text = 'Distribution Transformers (Compliant)';
+      _activeAnalysisPresetId = 'transformer';
       _hasAnalyzed = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -135,17 +165,79 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
   }
 
   Future<void> _runComplianceCheck() async {
+    final clauseText = _clauseController.text.trim();
+
+    // Failure Mode 1: Empty tender clause
+    if (_activeTabIndex == 0 && clauseText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Specification clause cannot be empty. Enter clause text or select a preset.',
+          ),
+          backgroundColor: AppColors.nonCompliantText,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Failure Mode 2: Extremely short / insufficient clause
+    if (_activeTabIndex == 0 && clauseText.length < 15) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Clause text too brief for statutory extraction (minimum 15 characters required).',
+          ),
+          backgroundColor: AppColors.reviewText,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    final isBoQ = _activeTabIndex == 1 &&
+        _uploadedFileName != null &&
+        (_uploadedFileName!.toLowerCase().contains('boq') ||
+            _uploadedFileName!.toLowerCase().contains('xlsx'));
+
+    // Intelligent preset / category resolution
+    String evaluatedPreset = _currentPresetId;
+    if (_activeTabIndex == 0) {
+      final lower = clauseText.toLowerCase();
+      if (lower.contains('pipe') || lower.contains('hdpe') || lower.contains('4984')) {
+        evaluatedPreset = 'pipe';
+        _selectedPresetIndex = 0;
+      } else if (lower.contains('transformer') || lower.contains('1180') || lower.contains('335') || lower.contains('kva')) {
+        evaluatedPreset = 'transformer';
+        _selectedPresetIndex = 1;
+      } else if (lower.contains('steel') || lower.contains('tmt') || lower.contains('1786') || lower.contains('rebar')) {
+        evaluatedPreset = 'steel';
+        _selectedPresetIndex = 2;
+      } else {
+        // Failure Mode 3/4/5/6: Unknown product / unknown standard / nonsense tender
+        evaluatedPreset = 'out_of_coverage';
+      }
+    }
+
     setState(() {
       _isAnalyzing = true;
       _hasAnalyzed = false;
-      _analysisProgressStep = 'Cross-referencing 23,000+ Indian Standards...';
+      _isBoQAnalysis = isBoQ;
+      _activeAnalysisPresetId = evaluatedPreset;
+      _analysisProgressStep = isBoQ
+          ? 'Extracting multi-item Bill of Quantities schedule...'
+          : 'Cross-referencing 23,000+ Indian Standards...';
     });
 
-    // Short, crisp ~700ms deterministic analysis state
+    // Crisp deterministic analysis state
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     setState(() {
-      _analysisProgressStep = 'Auditing Section 16 BIS Act QCO compliance...';
+      _analysisProgressStep = isBoQ
+          ? 'Auditing line-item specifications against QCO orders...'
+          : evaluatedPreset == 'out_of_coverage'
+              ? 'Checking category coverage across Bureau of Indian Standards divisions...'
+              : 'Auditing Section 16 BIS Act QCO compliance...';
     });
 
     await Future.delayed(const Duration(milliseconds: 400));
@@ -235,26 +327,69 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
 
           // Analysis Results (when completed)
           if (_hasAnalyzed) ...[
-            // 1. Audit Scorecard
-            AuditScorecard(
-              score: _currentAnalysis.compliancePercentage,
-              status: _currentAnalysis.status,
-              criticalCount: _currentAnalysis.criticalDefects,
-              highCount: _currentAnalysis.highRiskViolations,
-              summaryText: _currentAnalysis.summaryText,
-              onBuildSpecification: () => context.go(
-                '/specification-builder?preset=$_currentPresetId',
+            if (_isBoQAnalysis) ...[
+              BoQAuditCard(
+                result: DemoData.sampleBoQAuditResult,
+                onBuildSpecification: () => context.go(
+                  '/specification-builder?preset=$_currentPresetId',
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
+            ] else ...[
+              // 1. Audit Scorecard
+              AuditScorecard(
+                score: _currentAnalysis.compliancePercentage,
+                status: _currentAnalysis.status,
+                criticalCount: _currentAnalysis.criticalDefects,
+                highCount: _currentAnalysis.highRiskViolations,
+                summaryText: _currentAnalysis.summaryText,
+                onBuildSpecification: () => context.go(
+                  '/specification-builder?preset=$_currentPresetId',
+                ),
+                onViewDecisionTrace: () {
+                  final trace = const DemoStandardsRepository()
+                      .getDecisionTraceForPreset(_activeAnalysisPresetId);
+                  DecisionTraceSheet.show(context, trace: trace);
+                },
+              ),
+              const SizedBox(height: 18),
 
-            // 2. Detected Standards & Statutory Status
-            _buildDetectedStandardsSection(),
-            const SizedBox(height: 18),
+              // 2. Detected Technical Requirements
+              _buildDetectedRequirementsSection(),
+              const SizedBox(height: 18),
 
-            // 3. CVC Anti-Tailoring & Vigilance Flags
-            _buildCvcFlagsSection(),
-            const SizedBox(height: 18),
+              // 3. Detected Standards & Statutory Status
+              _buildDetectedStandardsSection(),
+              const SizedBox(height: 18),
+
+              // 4. Standards Lifecycle & Gazette Status
+              _buildLifecycleStatusSection(),
+              const SizedBox(height: 18),
+
+              // 5. Regulatory QCO Enforcement
+              _buildRegulatoryQcoSection(),
+              const SizedBox(height: 18),
+
+              // 6. CVC Anti-Tailoring & Vigilance Flags
+              _buildCvcFlagsSection(),
+              const SizedBox(height: 18),
+
+              // 7. Allied & Normative Standards
+              _buildRelatedStandardsSection(),
+              const SizedBox(height: 18),
+
+              // 8. Specification Gap Analysis
+              _buildSpecificationGapsSection(),
+              const SizedBox(height: 18),
+
+              // 9. Recommended Statutory Remedies
+              _buildRecommendedActionSection(),
+              const SizedBox(height: 18),
+
+              // 10. Human Review Sign-Off Card
+              _buildHumanReviewSection(),
+              const SizedBox(height: 18),
+            ],
 
             // Secondary Bridge CTA
             SecondaryButton(
@@ -794,6 +929,47 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
   Widget _buildDetectedStandardsSection() {
     final standards = _currentAnalysis.detectedStandards;
 
+    if (standards.isEmpty) {
+      return SectionCard(
+        title: 'Detected Standards & Statutory Status (0)',
+        subtitle: 'No matching Indian Standards identified in local database',
+        icon: Icons.auto_stories,
+        padding: const EdgeInsets.all(12),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  KnowledgeStateBadge(state: KnowledgeState.outOfCoverage),
+                  SizedBox(width: 8),
+                  Text(
+                    'OUT-OF-COVERAGE COMMODITY',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.reviewText,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'No governing Indian Standard could be authoritatively resolved for this specification. Live BIS lookup or Sectional Committee enquiry required.',
+                style: AppTextStyles.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SectionCard(
       title: 'Detected Standards & Statutory Status (${standards.length})',
       subtitle: 'Mandatory Indian Standards identified in the technical specification',
@@ -801,6 +977,10 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: standards.map((std) {
+          final kState = std.evidence != null
+              ? (std.isObsolete ? KnowledgeState.conflicting : KnowledgeState.verified)
+              : KnowledgeState.inferred;
+
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(12),
@@ -823,7 +1003,14 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    StatusBadge.obsolete(std.status),
+                    Wrap(
+                      spacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        KnowledgeStateBadge(state: kState),
+                        StatusBadge.obsolete(std.status),
+                      ],
+                    ),
                   ],
                 ),
                 if (std.replacementCode != null) ...[
@@ -869,36 +1056,93 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
                 ],
                 const SizedBox(height: 10),
 
-                // View Evidence Button
-                if (std.evidence != null)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primaryContainer,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                // Action Buttons: Why this standard, Explore in Graph & View Evidence
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primaryContainer,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                      ),
-                      icon: const Icon(Icons.menu_book, size: 14),
-                      label: const Text(
-                        'VIEW BIS EVIDENCE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                        icon: const Icon(Icons.help_outline, size: 13),
+                        label: const Text(
+                          'WHY THIS STANDARD?',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
+                        onPressed: () {
+                          final rationale = const DemoStandardsRepository()
+                              .getWhyThisStandard(std.code);
+                          WhyThisStandardSheet.show(context, rationale: rationale);
+                        },
                       ),
-                      onPressed: () {
-                        EvidenceSheet.show(
-                          context,
-                          evidence: std.evidence!,
-                          title: '${std.code} Supersession Evidence',
-                          subtitle: std.title,
-                        );
-                      },
-                    ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: const Icon(Icons.hub_outlined, size: 13),
+                        label: const Text(
+                          'GRAPH',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        onPressed: () {
+                          final code = std.replacementCode ?? std.code;
+                          context.go('/graph?standard=$code');
+                        },
+                      ),
+                      if (std.evidence != null)
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primaryContainer,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          icon: const Icon(Icons.menu_book, size: 13),
+                          label: const Text(
+                            'VIEW BIS EVIDENCE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          onPressed: () {
+                            EvidenceSheet.show(
+                              context,
+                              evidence: std.evidence!,
+                              title: '${std.code} Supersession Evidence',
+                              subtitle: std.title,
+                            );
+                          },
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
           );
@@ -1178,6 +1422,541 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
           );
         }).toList(),
       ),
+    );
+  }
+
+  Widget _buildDetectedRequirementsSection() {
+    final reqs = _currentAnalysis.detectedRequirements;
+    if (reqs.isEmpty) return const SizedBox.shrink();
+
+    return SectionCard(
+      title: 'Detected Technical Requirements (${reqs.length})',
+      subtitle: 'Structured parameters parsed from the tender clause text',
+      icon: Icons.checklist_rtl,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: reqs.map((req) {
+          final isReview = req.status == RequirementStatus.reviewRequired;
+          final isConflict = req.status == RequirementStatus.conflict;
+
+          KnowledgeState kState = KnowledgeState.verified;
+          if (isConflict) {
+            kState = KnowledgeState.conflicting;
+          } else if (isReview) {
+            kState = KnowledgeState.inferred;
+          }
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: isConflict
+                    ? AppColors.nonCompliantBorder
+                    : isReview
+                        ? AppColors.reviewBorder
+                        : AppColors.outlineVariant,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        req.parameter,
+                        style: AppTextStyles.cardTitle.copyWith(fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    KnowledgeStateBadge(state: kState),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      'Extracted Value: ',
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                    ),
+                    Text(
+                      req.extractedValue,
+                      style: AppTextStyles.codeBadge.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (req.clauseNumber != null)
+                      Text(
+                        '· Cl. ${req.clauseNumber}',
+                        style: AppTextStyles.caption,
+                      ),
+                  ],
+                ),
+                if (req.verificationNote != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    req.verificationNote!,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: isConflict ? AppColors.nonCompliantText : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildLifecycleStatusSection() {
+    final status = _currentAnalysis.lifecycleStatus;
+    if (status == null || status.isEmpty) return const SizedBox.shrink();
+
+    return SectionCard(
+      title: 'Standards Lifecycle & Gazette Status',
+      subtitle: 'Supersession history, revisions & BIS Official Gazette notifications',
+      icon: Icons.history_edu,
+      padding: const EdgeInsets.all(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppColors.nonCompliantBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.nonCompliantText),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'STATUTORY SUPERSEDED NOTICE',
+                    style: AppTextStyles.caption.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.nonCompliantText,
+                      letterSpacing: 0.5,
+                      fontSize: 10.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              status,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.outlineVariant),
+                  ),
+                  child: Text(
+                    'BIS Act 2016 · Gazette Enforced',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegulatoryQcoSection() {
+    final qco = _currentAnalysis.qcoSummary;
+    if (qco == null || qco.isEmpty) return const SizedBox.shrink();
+
+    return SectionCard(
+      title: 'Regulatory QCO & Mandatory Certification',
+      subtitle: 'Quality Control Orders issued under Section 16 of the BIS Act, 2016',
+      icon: Icons.verified_user,
+      padding: const EdgeInsets.all(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppColors.primaryContainer),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.gavel, size: 16, color: AppColors.primaryContainer),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'MANDATORY STATUTORY ORDER',
+                    style: AppTextStyles.caption.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryContainer,
+                      letterSpacing: 0.5,
+                      fontSize: 10.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              qco,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Statutory Impact: Supplying non-certified products or citing non-QCO compliant grades is a cognizable violation under BIS Act Section 16 & Section 29.',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textMuted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRelatedStandardsSection() {
+    final related = _currentAnalysis.relatedStandards;
+    if (related.isEmpty) return const SizedBox.shrink();
+
+    return SectionCard(
+      title: 'Allied & Normative Reference Standards (${related.length})',
+      subtitle: 'Interlinked testing protocols, materials, and harmonized cross-references',
+      icon: Icons.hub,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: related.map((std) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.outlineVariant),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Icon(Icons.link, size: 14, color: AppColors.primary),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(std.code, style: AppTextStyles.code.copyWith(fontSize: 12)),
+                          if (std.isQcoMandatory)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.nonCompliantSurface,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                'QCO MANDATORY',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.nonCompliantText,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(std.title, style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+                      if (std.scope != null) ...[
+                        const SizedBox(height: 4),
+                        Text(std.scope!, style: AppTextStyles.caption),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSpecificationGapsSection() {
+    final gaps = _currentAnalysis.specificationGaps;
+    if (gaps.isEmpty) return const SizedBox.shrink();
+
+    return SectionCard(
+      title: 'Specification Gap Analysis (${gaps.length})',
+      subtitle: 'Critical technical parameters and statutory schedules omitted from the tender clause',
+      icon: Icons.find_in_page_outlined,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: gaps.map((gap) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.reviewBorder),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(Icons.remove_circle_outline, size: 14, color: AppColors.reviewText),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    gap,
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildRecommendedActionSection() {
+    final actions = _currentAnalysis.recommendedActions;
+    if (actions.isEmpty) return const SizedBox.shrink();
+
+    return SectionCard(
+      title: 'Recommended Statutory Remedies (${actions.length})',
+      subtitle: 'System recommendations for rectifying tender clause before publishing',
+      icon: Icons.rule,
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: actions.asMap().entries.map((entry) {
+          final idx = entry.key + 1;
+          final action = entry.value;
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.outlineVariant),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 10,
+                  backgroundColor: AppColors.primaryContainer,
+                  child: Text(
+                    '$idx',
+                    style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    action,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildHumanReviewSection() {
+    final controller = WorkspaceController();
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final findings = _currentAnalysis.cvcFlags;
+        return SectionCard(
+          eyebrow: 'STATUTORY AUDIT WORKBENCH',
+          title: 'Human Review & Officer Sign-off',
+          subtitle: 'Statutory determination under GFR Rule 144. System advises, human decides.',
+          icon: Icons.rate_review_outlined,
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Officer: ${DemoData.officerName} (${DemoData.officerId}) · ${DemoData.officerRole}',
+                        style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...List.generate(findings.length, (index) {
+                final flag = findings[index];
+                final findingKey = 'finding-$index';
+                final action = controller.getReviewActionForFinding(findingKey);
+
+                Color statusColor = AppColors.reviewText;
+                String statusLabel = 'PENDING REVIEW';
+                if (action.status == ReviewStatus.accepted) {
+                  statusColor = AppColors.verifiedText;
+                  statusLabel = 'ACCEPTED';
+                } else if (action.status == ReviewStatus.flagged) {
+                  statusColor = AppColors.nonCompliantText;
+                  statusLabel = 'FLAGGED';
+                } else if (action.status == ReviewStatus.rejected) {
+                  statusColor = AppColors.textMuted;
+                  statusLabel = 'REJECTED';
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.outlineVariant),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              flag.title,
+                              style: AppTextStyles.cardTitle.copyWith(fontSize: 12),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Text(
+                              statusLabel,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: action.status == ReviewStatus.accepted
+                                    ? Colors.white
+                                    : AppColors.verifiedText,
+                                backgroundColor: action.status == ReviewStatus.accepted
+                                    ? AppColors.verifiedText
+                                    : Colors.transparent,
+                                side: const BorderSide(color: AppColors.verifiedText),
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                              ),
+                              onPressed: () {
+                                controller.updateReviewAction(findingKey, ReviewStatus.accepted);
+                              },
+                              child: const Text('ACCEPT REMEDY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: action.status == ReviewStatus.flagged
+                                    ? Colors.white
+                                    : AppColors.nonCompliantText,
+                                backgroundColor: action.status == ReviewStatus.flagged
+                                    ? AppColors.nonCompliantText
+                                    : Colors.transparent,
+                                side: const BorderSide(color: AppColors.nonCompliantText),
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                              ),
+                              onPressed: () {
+                                controller.updateReviewAction(findingKey, ReviewStatus.flagged);
+                              },
+                              child: const Text('FLAG CONFLICT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 6),
+              Text(
+                'Human Review Responsibility: ManakSetu provides deterministic statutory recommendations. Final legal and procurement authorization rests with the designated Scrutiny Officer under GFR Rule 144.',
+                style: AppTextStyles.caption.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

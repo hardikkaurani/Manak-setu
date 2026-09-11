@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
@@ -6,6 +7,8 @@ import '../theme/app_text_styles.dart';
 import '../data/demo_data.dart';
 import '../models/specification.dart';
 import '../models/specification_build_step.dart';
+import '../models/specification_parameter.dart';
+import '../services/workspace_controller.dart';
 import '../widgets/section_card.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/secondary_button.dart';
@@ -202,32 +205,80 @@ class _SpecificationBuilderScreenState
   }
 
   void _copySpecification() {
+    final buffer = StringBuffer();
+    final stdInfo = DemoData.getGoverningStandardInfo(_presetId);
+    buffer.writeln('========================================');
+    buffer.writeln('MANAKSETU STATUTORY TENDER SPECIFICATION');
+    buffer.writeln('Governing Standard: ${stdInfo['title'] ?? ''} (${stdInfo['badge'] ?? ''})');
+    buffer.writeln('Compliance Rating: $_currentScore% ($_currentStatus)');
+    buffer.writeln('Statutory Framework: BIS Act 2016 (Sec 16) · GFR Rule 144(vii)');
+    buffer.writeln('========================================\n');
+
+    buffer.writeln('--- TECHNICAL PARAMETERS ---');
+    final params = WorkspaceController().getParametersForPreset(_presetId);
+    for (final p in params) {
+      buffer.writeln('${p.name}: ${p.currentValue} [${p.status.toUpperCase()}]');
+    }
+    buffer.writeln('\n--- STATUTORY SPECIFICATION CLAUSES ---');
+    for (final sec in _sections) {
+      buffer.writeln('\n[Clause ${sec.sectionNumber}] ${sec.title}');
+      buffer.writeln(sec.content);
+      if (sec.isPurchaserDefined) {
+        buffer.writeln('>> NOTE: Purchaser-defined requirement (No BIS evidence attached)');
+      }
+    }
+
+    final customClauses = WorkspaceController().customPurchaserClauses;
+    if (customClauses.isNotEmpty) {
+      buffer.writeln('\n--- ADDITIONAL PURCHASER-DEFINED CLAUSES ---');
+      for (final c in customClauses) {
+        buffer.writeln('\n[Clause ${c.sectionNumber}] ${c.title} (PURCHASER-DEFINED)');
+        buffer.writeln(c.content);
+      }
+    }
+
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
-            Icon(Icons.content_copy, color: AppColors.onPrimary, size: 18),
-            SizedBox(width: 8),
+            const Icon(Icons.content_copy, color: AppColors.onPrimary, size: 18),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Copied bid-ready tender specification to clipboard for GeM portal.',
+                'Copied bid-ready tender specification (${buffer.length} characters) to clipboard for GeM portal.',
               ),
             ),
           ],
         ),
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
 
   void _downloadCertificatePdf() {
+    final buffer = StringBuffer();
+    final stdInfo = DemoData.getGoverningStandardInfo(_presetId);
+    buffer.writeln('=====================================================');
+    buffer.writeln('GOVERNMENT OF INDIA · STATUTORY VIGILANCE AUDIT REPORT');
+    buffer.writeln('MANAKSETU PROCUREMENT SCRUTINY CERTIFICATE (DEMO STATE)');
+    buffer.writeln('=====================================================');
+    buffer.writeln('Audit ID: NIT-DES-8842');
+    buffer.writeln('Officer: ${DemoData.officerName} (${DemoData.officerId})');
+    buffer.writeln('Standard: ${stdInfo['title']} (${stdInfo['badge']})');
+    buffer.writeln('Compliance Score: $_currentScore% ($_currentStatus)');
+    buffer.writeln('Verification: GFR Rule 144(vii) & BIS Act 2016 Mandatory QCO Order');
+    buffer.writeln('Status: Ready for Departmental Tender Publication');
+    buffer.writeln('=====================================================');
+
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(
           children: [
-            Icon(Icons.picture_as_pdf, color: AppColors.onPrimary, size: 18),
+            Icon(Icons.verified, color: AppColors.onPrimary, size: 18),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -236,7 +287,7 @@ class _SpecificationBuilderScreenState
             ),
           ],
         ),
-        duration: Duration(seconds: 2),
+        duration: Duration(seconds: 3),
       ),
     );
   }
@@ -833,7 +884,11 @@ class _SpecificationBuilderScreenState
         _buildProgressiveCorrectionsSection(),
         const SizedBox(height: 18),
 
-        // 2. Clause-by-Clause Workbench
+        // 2. Interactive Parameter Simulation & Conflict Detection
+        _buildEditableParametersSection(),
+        const SizedBox(height: 18),
+
+        // 3. Clause-by-Clause Workbench
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -855,7 +910,429 @@ class _SpecificationBuilderScreenState
         ),
         const SizedBox(height: 12),
         ..._sections.map((sec) => _buildExpandableSectionCard(sec)),
+        const SizedBox(height: 18),
+
+        // 4. Purchaser-Defined Requirements (Explicit Separation from BIS)
+        _buildPurchaserClausesSection(),
       ],
+    );
+  }
+
+  Widget _buildEditableParametersSection() {
+    final controller = WorkspaceController();
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final params = controller.getParametersForPreset(_presetId);
+        return SectionCard(
+          eyebrow: 'STATUTORY PARAMETER SIMULATION',
+          title: 'Technical Parameters (${params.length})',
+          subtitle: 'Simulate tender amendments. Live BIS rules detect conflicts.',
+          icon: Icons.tune,
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: params.map((param) {
+              final isConflict = param.status == 'conflict';
+              final isVerified = param.status == 'verified';
+
+              Color badgeBg = AppColors.surfaceContainerLow;
+              Color badgeText = AppColors.verifiedText;
+              if (isConflict) {
+                badgeText = AppColors.nonCompliantText;
+              } else if (!isVerified) {
+                badgeText = AppColors.reviewText;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isConflict ? AppColors.nonCompliantBorder : AppColors.outlineVariant,
+                    width: isConflict ? 1.5 : 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            param.name,
+                            style: AppTextStyles.cardTitle.copyWith(fontSize: 13),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: badgeText.withValues(alpha: 0.3)),
+                          ),
+                          child: Text(
+                            param.status.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: badgeText,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Text(
+                                'Value: ',
+                                style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                              ),
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceContainerLow,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    param.currentValue,
+                                    style: AppTextStyles.codeBadge.copyWith(
+                                      color: isConflict ? AppColors.nonCompliantText : AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primaryContainer,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: const Size(60, 28),
+                          ),
+                          icon: const Icon(Icons.edit, size: 12),
+                          label: const Text('EDIT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                          onPressed: () => _showEditParameterDialog(param),
+                        ),
+                      ],
+                    ),
+                    if (isConflict && param.conflictMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.nonCompliantSurface,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.nonCompliantBorder),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.error_outline, size: 14, color: AppColors.nonCompliantText),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                param.conflictMessage!,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.nonCompliantText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditParameterDialog(SpecificationParameter param) {
+    final textEditController = TextEditingController(text: param.currentValue);
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: Text('Edit Parameter: ${param.name}', style: AppTextStyles.cardTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter technical value. Live BIS rule checks will evaluate compliance with ${DemoData.getGoverningStandardInfo(_presetId)['title'] ?? 'Indian Standards'}.',
+                style: AppTextStyles.caption,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: textEditController,
+                decoration: const InputDecoration(
+                  labelText: 'Parameter Value',
+                  hintText: 'e.g. PE100, PE63, Level 2, Level 1',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('Quick Test Values:', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  ActionChip(
+                    label: Text(param.allowedValues.isNotEmpty ? param.allowedValues.first : 'Compliant Value', style: const TextStyle(fontSize: 10)),
+                    onPressed: () {
+                      textEditController.text = param.allowedValues.isNotEmpty ? param.allowedValues.first : 'Compliant';
+                    },
+                  ),
+                  if (param.id == 'material')
+                    ActionChip(
+                      label: const Text('PE63 (Obsolete Conflict)', style: TextStyle(fontSize: 10, color: AppColors.nonCompliantText)),
+                      onPressed: () => textEditController.text = 'PE63',
+                    )
+                  else if (param.id == 'energy_level')
+                    ActionChip(
+                      label: const Text('Level 1 (BEE Mandate Conflict)', style: TextStyle(fontSize: 10, color: AppColors.nonCompliantText)),
+                      onPressed: () => textEditController.text = 'Level 1',
+                    )
+                  else if (param.id == 'steel_grade')
+                    ActionChip(
+                      label: const Text('Fe 415 (Obsolete Conflict)', style: TextStyle(fontSize: 10, color: AppColors.nonCompliantText)),
+                      onPressed: () => textEditController.text = 'Fe 415',
+                    )
+                  else if (param.id == 'cooling')
+                    ActionChip(
+                      label: const Text('OFWF (Conflict)', style: TextStyle(fontSize: 10, color: AppColors.nonCompliantText)),
+                      onPressed: () => textEditController.text = 'OFWF',
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newValue = textEditController.text.trim();
+                if (newValue.isNotEmpty) {
+                  WorkspaceController().updateParameterValue(_presetId, param.id, newValue);
+                }
+                Navigator.of(dialogCtx).pop();
+              },
+              child: const Text('UPDATE PARAMETER'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPurchaserClausesSection() {
+    final controller = WorkspaceController();
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final customClauses = controller.customPurchaserClauses;
+        return SectionCard(
+          eyebrow: 'STATUTORY SEPARATION: PURCHASER CONDITIONS',
+          title: 'Purchaser-Defined Requirements (${customClauses.length})',
+          subtitle: 'Specific procurement conditions distinct from BIS mandates (no BIS evidence attached).',
+          icon: Icons.assignment_turned_in,
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.reviewBg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: AppColors.reviewBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 16, color: AppColors.reviewText),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Statutory Rule: Purchaser-defined delivery, warranty, and inspection clauses must be kept separate from BIS standard clauses to prevent anti-competitive tailoring.',
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.reviewText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (customClauses.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'No custom purchaser requirements added yet. Use the button below to add departmental delivery, warranty, or inspection criteria.',
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              else
+                ...customClauses.map((clause) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.outlineVariant),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.reviewBg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'PURCHASER-DEFINED',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.reviewText,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.textMuted),
+                              onPressed: () => controller.removePurchaserClause(clause.id),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(clause.title, style: AppTextStyles.cardTitle.copyWith(fontSize: 13)),
+                        const SizedBox(height: 4),
+                        Text(clause.content, style: AppTextStyles.bodySmall),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Note: Not mandated by BIS standards.',
+                          style: AppTextStyles.caption.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryContainer,
+                  side: const BorderSide(color: AppColors.primaryContainer),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text(
+                  '+ ADD PURCHASER REQUIREMENT',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+                onPressed: _showAddPurchaserClauseDialog,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddPurchaserClauseDialog() {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          title: const Text('Add Purchaser Requirement', style: AppTextStyles.cardTitle),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Purchaser-defined clauses will be explicitly labeled as "PURCHASER-DEFINED (No BIS Evidence Attached)" to preserve audit integrity under CVC vigilance standards.',
+                  style: AppTextStyles.caption,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Clause Title',
+                    hintText: 'e.g. Warranty & Comprehensive AMC Schedule',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: contentController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Clause Requirement Text',
+                    hintText: 'e.g. Supplier shall provide 36 months comprehensive warranty with 48-hour on-site replacement guarantee.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final title = titleController.text.trim();
+                final content = contentController.text.trim();
+                if (title.isNotEmpty && content.isNotEmpty) {
+                  WorkspaceController().addPurchaserClause(
+                    title: title,
+                    content: content,
+                  );
+                }
+                Navigator.of(dialogCtx).pop();
+              },
+              child: const Text('ADD CLAUSE'),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -15,7 +15,8 @@ void main() {
       });
 
       // 1. Pump the app
-      await tester.pumpWidget(const ManakSetuApp());
+      await tester
+          .pumpWidget(const ManakSetuApp(initialLocation: '/tender-scrutiny'));
       await tester.pumpAndSettle();
 
       // 2. Verify Top Header Branding

@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'status_badge.dart';
 import 'primary_button.dart';
+import 'secondary_button.dart';
 
 /// Prominent mobile-friendly audit scorecard displaying compliance evaluation,
 /// critical defects count, high-risk violations count, and immediate rectification warning.
@@ -14,6 +15,7 @@ class AuditScorecard extends StatelessWidget {
   final int highCount;
   final String summaryText;
   final VoidCallback onBuildSpecification;
+  final VoidCallback? onViewDecisionTrace;
 
   const AuditScorecard({
     super.key,
@@ -23,18 +25,24 @@ class AuditScorecard extends StatelessWidget {
     required this.highCount,
     required this.summaryText,
     required this.onBuildSpecification,
+    this.onViewDecisionTrace,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isOutOfCoverage = status == 'OUT_OF_COVERAGE' || status == 'UNKNOWN';
+    final accentColor = isOutOfCoverage ? AppColors.reviewText : AppColors.nonCompliantText;
+    final accentBg = isOutOfCoverage ? AppColors.reviewBg : AppColors.nonCompliantBg;
+    final accentBorder = isOutOfCoverage ? AppColors.reviewBorder : AppColors.nonCompliantBorder;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.nonCompliantBorder, width: 1.5),
+        border: Border.all(color: accentBorder, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.nonCompliantText.withValues(alpha: 0.05),
+            color: accentColor.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -47,12 +55,12 @@ class AuditScorecard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.nonCompliantBg.withValues(alpha: 0.7),
+              color: accentBg.withValues(alpha: 0.7),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(6),
               ),
-              border: const Border(
-                bottom: BorderSide(color: AppColors.nonCompliantBorder),
+              border: Border(
+                bottom: BorderSide(color: accentBorder),
               ),
             ),
             child: Wrap(
@@ -64,23 +72,25 @@ class AuditScorecard extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.gavel,
-                      color: AppColors.nonCompliantText,
+                    Icon(
+                      isOutOfCoverage ? Icons.help_outline : Icons.gavel,
+                      color: accentColor,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'COMPLIANCE EVALUATION',
+                      isOutOfCoverage ? 'COVERAGE INTELLIGENCE' : 'COMPLIANCE EVALUATION',
                       style: AppTextStyles.caption.copyWith(
-                        color: AppColors.nonCompliantText,
+                        color: accentColor,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
                       ),
                     ),
                   ],
                 ),
-                StatusBadge.nonCompliant(status),
+                isOutOfCoverage
+                    ? StatusBadge.review(status)
+                    : StatusBadge.nonCompliant(status),
               ],
             ),
           ),
@@ -129,7 +139,7 @@ class AuditScorecard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'COMPLIANCE INDEX',
+                            'STATUTORY COMPLIANCE INDEX',
                             style: AppTextStyles.caption.copyWith(
                               fontWeight: FontWeight.w700,
                               color: AppColors.textMuted,
@@ -145,7 +155,7 @@ class AuditScorecard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'CAG / CVC Vigilance Review Flagged',
+                            'Retrieval & Statutory Rule Confidence: $score%',
                             style: AppTextStyles.caption.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -296,12 +306,20 @@ class AuditScorecard extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Direct Action Button
+                // Direct Action Buttons
                 PrimaryButton(
                   label: 'BUILD COMPLIANT SPECIFICATION →',
                   icon: Icons.edit_document,
                   onPressed: onBuildSpecification,
                 ),
+                if (onViewDecisionTrace != null) ...[
+                  const SizedBox(height: 8),
+                  SecondaryButton(
+                    label: 'VIEW AUDIT DECISION TRACE & EVIDENCE CHAIN',
+                    icon: Icons.account_tree_outlined,
+                    onPressed: onViewDecisionTrace!,
+                  ),
+                ],
               ],
             ),
           ),

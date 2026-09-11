@@ -5,6 +5,15 @@ import '../models/tender_analysis.dart';
 import '../models/specification.dart';
 import '../models/standards_graph_node.dart';
 import '../models/specification_build_step.dart';
+import '../models/requirement.dart';
+import '../models/boq_item.dart';
+import '../models/review_action.dart';
+import '../models/specification_parameter.dart';
+import '../models/qco_order.dart';
+import '../models/knowledge_state.dart';
+import '../models/decision_trace.dart';
+import '../models/why_this_standard.dart';
+import '../models/amendment_diff.dart';
 
 /// Single source of truth for all canonical mock data in the ManakSetu demo.
 /// Strictly transcribed from `manaksetu_mock_data.md` and repo reference data
@@ -221,6 +230,80 @@ abstract final class DemoData {
         standardCitation: 'CVC PQC Guidelines',
       ),
     ],
+    lifecycleStatus:
+        'WITHDRAWN / SUPERSEDED (IS 4984:1995 superseded by IS 4984:2016)',
+    regulatoryQcoSummary:
+        'Pipes and Fittings (Quality Control) Order, 2021 mandates Scheme-I ISI mark. Self-declaration or exemption for imported items is prohibited.',
+    recommendedActionSummary:
+        'Upgrade to IS 4984:2016 PE-100, remove Supreme/Astral trade lock-in, enforce mandatory ISI mark CM/L operational license verification.',
+    detectedRequirements: [
+      Requirement(
+        id: 'p-req-1',
+        parameterName: 'Product Type',
+        specifiedValue: 'HDPE Pressure Pipes for Water Supply',
+        status: RequirementStatus.verified,
+        statutoryCitation: 'IS 4984:2016 Clause 1.1',
+      ),
+      Requirement(
+        id: 'p-req-2',
+        parameterName: 'Design Standard',
+        specifiedValue: 'IS 4984:1995 or ASTM D3035',
+        status: RequirementStatus.obsoleteCitation,
+        statutoryCitation: 'GFR 2017 Rule 144(vii)',
+        recommendedValue: 'IS 4984:2016 (Fifth Revision)',
+        reason:
+            'Superseded edition and foreign standard without domestic equivalence.',
+      ),
+      Requirement(
+        id: 'p-req-3',
+        parameterName: 'Approved Brands',
+        specifiedValue: 'Supreme or Astral make only',
+        status: RequirementStatus.brandLockIn,
+        statutoryCitation: 'CVC OM No. 03-05-01',
+        recommendedValue: 'Generic specification with valid BIS ISI license',
+        reason: 'Restricts public procurement competition.',
+      ),
+      Requirement(
+        id: 'p-req-4',
+        parameterName: 'Raw Material Grade & SDR',
+        specifiedValue: 'PE-80, PN 10, SDR 11',
+        status: RequirementStatus.reviewRequired,
+        statutoryCitation: 'IS 4984:2016 Table 2',
+        recommendedValue: 'PE-100, PN 10, SDR 11',
+        reason:
+            'PE-100 provides superior long-term hydrostatic strength (MRS 10.0 MPa).',
+      ),
+      Requirement(
+        id: 'p-req-5',
+        parameterName: 'BIS ISI Certification',
+        specifiedValue: 'Optional for imported consignments',
+        status: RequirementStatus.obsoleteCitation,
+        statutoryCitation: 'Section 16 BIS Act 2016',
+        recommendedValue: 'Compulsory Scheme-I Standard Mark',
+        reason:
+            'QCO 2021 mandates ISI certification without import exemptions.',
+      ),
+    ],
+    specificationGaps: [
+      'Missing internal hydrostatic pressure test requirements (100h at 20°C and 165h at 80°C per IS 4984 Table 4).',
+      'Missing melt flow index (MFI) and carbon black content testing per IS 2530:1963.',
+      'Missing mandatory third-party inspection (RITES / CIPET) protocol for NABL laboratory testing.',
+    ],
+    relatedStandards: [
+      Standard(
+        code: 'IS 2530:1963',
+        title: 'Methods for Testing Plastics — Polyethylene',
+        status: 'CURRENT',
+        division: 'Chemical',
+      ),
+      Standard(
+        code: 'IS 4984:2016',
+        title:
+            'High Density Polyethylene Pipes for Water Supply — Specification',
+        status: 'CURRENT',
+        division: 'Civil Engineering',
+      ),
+    ],
   );
 
   // ==========================================
@@ -349,6 +432,85 @@ abstract final class DemoData {
         ),
       ),
     ],
+    lifecycleStatus:
+        'SUPERSEDED (IS 1180:1989 superseded by IS 1180 (Part 1):2014 Amd 1-4)',
+    regulatoryQcoSummary:
+        'Distribution Transformers (Quality Control) Order, 2014 (S.O. 1621(E)) mandates compulsory Scheme-I (ISI Mark) license before technical bid opening.',
+    recommendedActionSummary:
+        'Replace obsolete IS 1180:1989 with IS 1180 (Part 1):2014, strip ABB/Siemens lock-in, inject mandatory QCO CM/L qualification requirement, update insulating oil to IS 335:2018.',
+    detectedRequirements: [
+      Requirement(
+        id: 't-req-1',
+        parameterName: 'Nominal Rating & Voltage',
+        specifiedValue: '500 kVA, 11 kV / 433 V, 3-Phase 50 Hz',
+        status: RequirementStatus.verified,
+        statutoryCitation: 'IS 1180 (Part 1):2014 Table 1',
+      ),
+      Requirement(
+        id: 't-req-2',
+        parameterName: 'Governing Standard',
+        specifiedValue: 'IS 1180:1989',
+        status: RequirementStatus.obsoleteCitation,
+        statutoryCitation: 'GFR 2017 Rule 144(vii)',
+        recommendedValue: 'IS 1180 (Part 1):2014 + Amendments 1-4',
+        reason:
+            'Superseded by Bureau of Indian Standards; restricts competitive bidding.',
+      ),
+      Requirement(
+        id: 't-req-3',
+        parameterName: 'High Voltage Bushings',
+        specifiedValue: 'ABB or Siemens make only',
+        status: RequirementStatus.brandLockIn,
+        statutoryCitation: 'CVC OM No. 03-05-01',
+        recommendedValue: 'Conforming to IS 2099 / IS 3347 (Brand-neutral)',
+        reason:
+            'Tailored vendor clause restricting competitive domestic procurement.',
+      ),
+      Requirement(
+        id: 't-req-4',
+        parameterName: 'Insulating Oil Standard',
+        specifiedValue: 'IS 335:1993',
+        status: RequirementStatus.obsoleteCitation,
+        statutoryCitation: 'IS 335:2018',
+        recommendedValue: 'IS 335:2018 (New Insulating Oils)',
+        reason: 'Superseded standard cited for dielectric fluid.',
+      ),
+      Requirement(
+        id: 't-req-5',
+        parameterName: 'QCO Compliance Declaration',
+        specifiedValue: 'Left to bidder self-declaration',
+        status: RequirementStatus.reviewRequired,
+        statutoryCitation: 'Section 16 BIS Act, 2016',
+        recommendedValue: 'Compulsory valid CM/L ISI license at bid opening',
+        reason: 'Summary rejection mandated for non-certified supplies.',
+      ),
+    ],
+    specificationGaps: [
+      'Missing maximum total loss limits at 50% and 100% loading as per IS 1180 (Part 1):2014 Table 3 / BEE Energy Efficiency Star-1 Level.',
+      'Missing Type Test certification for Short Circuit Withstand Test from an accredited test laboratory (CPRI / ERDA).',
+      'Missing temperature rise limits (40°C in oil, 45°C by resistance) per IS 1180 Clause 7.',
+    ],
+    relatedStandards: [
+      Standard(
+        code: 'IS 335:2018',
+        title: 'New Insulating Oils — Specification',
+        status: 'CURRENT',
+        division: 'Electrotechnical',
+      ),
+      Standard(
+        code: 'IS 2099:2018',
+        title:
+            'Bushings for Alternating Voltages Above 1000 V — Specification',
+        status: 'CURRENT',
+        division: 'Electrotechnical',
+      ),
+      Standard(
+        code: 'IS 2026 (Part 1):2011',
+        title: 'Power Transformers — Part 1: General',
+        status: 'CURRENT',
+        division: 'Electrotechnical',
+      ),
+    ],
   );
 
   // ==========================================
@@ -457,7 +619,133 @@ abstract final class DemoData {
         standardCitation: 'CVC PQC Guidelines',
       ),
     ],
+    lifecycleStatus:
+        'FOREIGN CITATION (ASTM A615 cited without domestic IS 1786 equivalence)',
+    regulatoryQcoSummary:
+        'Steel and Steel Products (Quality Control) Order, 2020 mandates Scheme-I BIS license for all TMT reinforcement bars before tender bid opening.',
+    recommendedActionSummary:
+        'Specify IS 1786:2008 Grade Fe 500D, eliminate Tata/Jindal brand monopoly, remove single-distributor barrier, mandate active ISI license at bid opening.',
+    detectedRequirements: [
+      Requirement(
+        id: 's-req-1',
+        parameterName: 'Product Nomenclature',
+        specifiedValue: '50 MT Thermo-Mechanically Treated (TMT) bars 16mm',
+        status: RequirementStatus.verified,
+        statutoryCitation: 'IS 1786:2008 Clause 1.1',
+      ),
+      Requirement(
+        id: 's-req-2',
+        parameterName: 'Governing Standard',
+        specifiedValue: 'ASTM A615 Grade 60',
+        status: RequirementStatus.obsoleteCitation,
+        statutoryCitation: 'GFR 2017 Rule 144(vii)',
+        recommendedValue: 'IS 1786:2008 Grade Fe 500D',
+        reason:
+            'Foreign standard cited without mandatory domestic Indian Standard equivalence.',
+      ),
+      Requirement(
+        id: 's-req-3',
+        parameterName: 'Primary Make / Brands',
+        specifiedValue: 'Tata Tiscon or Jindal Panther only',
+        status: RequirementStatus.brandLockIn,
+        statutoryCitation: 'CVC OM No. 03-05-01',
+        recommendedValue:
+            'Primary/secondary producers with BIS license (Brand-neutral)',
+        reason: 'Explicit brand citation violates CVC anti-tailoring directives.',
+      ),
+      Requirement(
+        id: 's-req-4',
+        parameterName: 'Vendor PQC Condition',
+        specifiedValue: 'Sole authorized distributor certificate',
+        status: RequirementStatus.brandLockIn,
+        statutoryCitation: 'CVC PQC Guidelines',
+        recommendedValue: 'Open to verified authorized distributors and stockists',
+        reason: 'Creates vendor lock-in restricting fair competition.',
+      ),
+      Requirement(
+        id: 's-req-5',
+        parameterName: 'Steel QCO Verification',
+        specifiedValue: 'Scheme-I BIS certificate may be submitted post-award',
+        status: RequirementStatus.reviewRequired,
+        statutoryCitation: 'Section 16 BIS Act, 2016',
+        recommendedValue: 'Compulsory active BIS license on date of bid opening',
+        reason: 'Post-award submission is unlawful under mandatory Steel QCO.',
+      ),
+    ],
+    specificationGaps: [
+      'Missing minimum yield strength (500 MPa) and total elongation (16.0%) test standards under IS 1786 Table 3.',
+      'Missing chemical limits on maximum Carbon (0.25%), Sulphur (0.040%), and Phosphorus (0.040%).',
+      'Missing 0.2 percent proof stress verification and bend/rebend test protocol per IS 1786 Clause 9.',
+    ],
+    relatedStandards: [
+      Standard(
+        code: 'IS 1786:2008',
+        title:
+            'High Strength Deformed Steel Bars and Wires for Concrete Reinforcement — Specification (Fe 500D)',
+        status: 'CURRENT',
+        division: 'Civil Engineering',
+      ),
+      Standard(
+        code: 'IS 432 (Part 1):1982',
+        title:
+            'Mild Steel and Medium Tensile Steel Bars and Hard-Drawn Steel Wire for Concrete Reinforcement',
+        status: 'CURRENT',
+        division: 'Civil Engineering',
+      ),
+    ],
   );
+
+  // ==========================================
+  // UNKNOWN / OUT-OF-COVERAGE DEMO ANALYSIS
+  // (Failure Mode Hardening & Explicit Knowledge State)
+  // ==========================================
+  static final TenderAnalysis outOfCoverageAnalysis = TenderAnalysis(
+    id: 'NIT-UNKNOWN-000',
+    title: 'Unindexed Commodity / Specification',
+    department: 'General Procurement Directorate',
+    inputClause: 'Unindexed tender specification',
+    compliancePercentage: 0,
+    status: 'UNKNOWN',
+    criticalDefects: 0,
+    highRiskViolations: 0,
+    summaryText:
+        'COMMODITY OUT-OF-COVERAGE: The submitted technical parameters do not match any indexed Indian Standard in the local offline engineering catalog. Statutory compliance cannot be verified without authoritative BIS portal lookup or manual standards committee review.',
+    detectedStandards: const [],
+    cvcFlags: const [
+      ComplianceFinding(
+        severity: FindingSeverity.warning,
+        title: 'Out-Of-Coverage Commodity / Insufficient Evidence',
+        matchedEntity: 'Unrecognized Clause Text',
+        description:
+            'No matching BIS Gazette Schedule or QCO order could be conclusively retrieved. Statutory verification requires authoritative manual submission.',
+        statutoryAction:
+            'Initiate formal inquiry on BIS Manakonline (manakonline.in) or reference central government procurement schedule.',
+        standardCitation: 'BIS Act 2016 Section 16 & CVC Guidelines',
+      ),
+    ],
+    lifecycleStatus:
+        'OUT-OF-COVERAGE / UNKNOWN: No applicable Indian Standard currently mapped in offline database.',
+    regulatoryQcoSummary:
+        'QCO status unknown — product category is not present in the current offline demo gazette registry.',
+    recommendedActionSummary:
+        'Perform manual scrutiny via BIS Manakonline portal or consult the relevant Sectional Committee (CED/ETD/MED).',
+    detectedRequirements: const [
+      Requirement(
+        id: 'u-req-1',
+        parameterName: 'Category Classification',
+        specifiedValue: 'Unindexed Commodity / Clause',
+        status: RequirementStatus.reviewRequired,
+        reason:
+            'Statutory coverage is currently limited to civil, electrotechnical, and mechanical infrastructure presets.',
+      ),
+    ],
+    relatedStandards: const [],
+    specificationGaps: const [
+      'Commodity specification not mapped to any Bureau of Indian Standards Sectional Committee schedule.',
+      'Mandatory QCO enforcement cannot be evaluated offline for unindexed goods.'
+    ],
+  );
+
 
   // ==========================================
   // PROGRESSIVE BUILD STEPS PER PRESET
@@ -1715,6 +2003,7 @@ abstract final class DemoData {
   // ==========================================
   static String normalizePresetId(String? id) {
     if (id == 'pipe' || id == 'steel') return id!;
+    if (id == 'out_of_coverage' || id == 'unknown') return 'out_of_coverage';
     return 'transformer';
   }
 
@@ -1722,6 +2011,7 @@ abstract final class DemoData {
     final norm = normalizePresetId(presetId);
     if (norm == 'pipe') return pipeAnalysis;
     if (norm == 'steel') return steelAnalysis;
+    if (norm == 'out_of_coverage') return outOfCoverageAnalysis;
     return transformerAnalysis;
   }
 
@@ -1870,6 +2160,216 @@ abstract final class DemoData {
   }
 
   // ==========================================
+  // KNOWLEDGE GRAPH DIRECTED EDGES & BUNDLES
+  // ==========================================
+  static const List<StandardsGraphEdge> transformerGraphEdges = [
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-qco-transformers',
+      relationship: 'GOVERNED_BY_QCO',
+      label: 'governed_by_qco',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is1180-1989',
+      relationship: 'SUPERSEDES',
+      label: 'supersedes',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is335-2018',
+      relationship: 'REQUIRES_MATERIAL',
+      label: 'insulating_oil',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is335-2018',
+      targetId: 'node-is335-1993',
+      relationship: 'SUPERSEDES',
+      label: 'supersedes',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is12444',
+      relationship: 'REQUIRES_MATERIAL',
+      label: 'copper_conductors',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is3024',
+      relationship: 'REQUIRES_MATERIAL',
+      label: 'crgo_steel',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is2026',
+      relationship: 'REQUIRES_TEST',
+      label: 'routine_type_tests',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is6792',
+      relationship: 'REQUIRES_TEST',
+      label: 'oil_bdv_test',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is3347',
+      relationship: 'ALLIED_WITH',
+      label: 'bushings_standard',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-is3639',
+      relationship: 'ALLIED_WITH',
+      label: 'fittings_accessories',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1180-2014',
+      targetId: 'node-iec60076',
+      relationship: 'EQUIVALENT_TO',
+      label: 'harmonized_iec',
+    ),
+  ];
+
+  static const List<StandardsGraphEdge> pipeGraphEdges = [
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-qco-pipes',
+      relationship: 'GOVERNED_BY_QCO',
+      label: 'governed_by_qco',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-is4984-1995',
+      relationship: 'SUPERSEDES',
+      label: 'supersedes',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-is7328',
+      relationship: 'REQUIRES_MATERIAL',
+      label: 'virgin_pe100_resin',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-is12235',
+      relationship: 'REQUIRES_TEST',
+      label: 'hydrostatic_tests',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-is2530',
+      relationship: 'REQUIRES_TEST',
+      label: 'mfi_carbon_tests',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-is14333',
+      relationship: 'ALLIED_WITH',
+      label: 'sewerage_pipes',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-is8008',
+      relationship: 'ALLIED_WITH',
+      label: 'butt_welded_fittings',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is4984-2016',
+      targetId: 'node-astm-d3035',
+      relationship: 'EQUIVALENT_TO',
+      label: 'foreign_equivalent',
+    ),
+  ];
+
+  static const List<StandardsGraphEdge> steelGraphEdges = [
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-qco-steel',
+      relationship: 'GOVERNED_BY_QCO',
+      label: 'governed_by_qco',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-is1786-1985',
+      relationship: 'SUPERSEDES',
+      label: 'supersedes',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-is2830',
+      relationship: 'REQUIRES_MATERIAL',
+      label: 'primary_billets',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-is1608',
+      relationship: 'REQUIRES_TEST',
+      label: 'tensile_yield_test',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-is1599',
+      relationship: 'REQUIRES_TEST',
+      label: 'bend_rebend_test',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-is228',
+      relationship: 'REQUIRES_TEST',
+      label: 'chemical_analysis',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-is2502',
+      relationship: 'ALLIED_WITH',
+      label: 'bending_fixing_code',
+    ),
+    StandardsGraphEdge(
+      sourceId: 'node-is1786-2008',
+      targetId: 'node-astm-a615',
+      relationship: 'EQUIVALENT_TO',
+      label: 'foreign_equivalent',
+    ),
+  ];
+
+  static StandardsGraphBundle getGraphBundleForPreset(String? presetId) {
+    final norm = normalizePresetId(presetId);
+    if (norm == 'pipe') {
+      return StandardsGraphBundle(
+        rootNode: pipeGraphNodes.first,
+        nodes: pipeGraphNodes,
+        edges: pipeGraphEdges,
+      );
+    }
+    if (norm == 'steel') {
+      return StandardsGraphBundle(
+        rootNode: steelGraphNodes.first,
+        nodes: steelGraphNodes,
+        edges: steelGraphEdges,
+      );
+    }
+    return StandardsGraphBundle(
+      rootNode: transformerGraphNodes.first,
+      nodes: transformerGraphNodes,
+      edges: transformerGraphEdges,
+    );
+  }
+
+  static StandardsGraphBundle getGraphBundleForStandard(String code) {
+    final clean = code.toUpperCase();
+    if (clean.contains('4984') || clean.contains('PIPE')) {
+      return getGraphBundleForPreset('pipe');
+    }
+    if (clean.contains('1786') ||
+        clean.contains('STEEL') ||
+        clean.contains('TMT')) {
+      return getGraphBundleForPreset('steel');
+    }
+    return getGraphBundleForPreset('transformer');
+  }
+
+  // ==========================================
   // PHASE 4: IMAGE CLAUSE ANALYZER CANONICAL MOCK DATA
   // ==========================================
   static const String imageClauseExtractedText =
@@ -1892,4 +2392,1184 @@ abstract final class DemoData {
 
   static Evidence get imageClauseEvidence =>
       transformerAnalysis.detectedStandards[0].evidence!;
+
+  // ==========================================
+  // BILL OF QUANTITIES (BoQ) AUDIT SAMPLE
+  // ==========================================
+  static const BoQAuditResult sampleBoQAuditResult = BoQAuditResult(
+    fileName: 'municipal_procurement_boq.xlsx',
+    totalItems: 5,
+    passCount: 2,
+    warnCount: 1,
+    failCount: 2,
+    statutoryComplianceScore: 40,
+    items: [
+      BoQItem(
+        itemNumber: 'ITEM 01',
+        description:
+            '500 kVA, 11 kV / 433 V Outdoor Oil-Immersed Distribution Transformer',
+        quantity: '4',
+        unit: 'Nos',
+        citedStandard: 'IS 1180:1989',
+        status: BoQStatus.fail,
+        recommendedStandard: 'IS 1180 (Part 1):2014 Amd 1-4',
+        statutoryDefect:
+            'Obsolete 1989 edition cited + ABB/Siemens proprietary bushing restriction.',
+        recommendedAction:
+            'Upgrade to IS 1180 (Part 1):2014; remove brand lock-in; mandate BIS Scheme-I ISI mark.',
+        mandatoryQcoCited: false,
+        isBrandLocked: true,
+      ),
+      BoQItem(
+        itemNumber: 'ITEM 02',
+        description: 'HDPE Water Supply Pipe 110mm OD PN 10 SDR 11',
+        quantity: '2,500',
+        unit: 'Mtrs',
+        citedStandard: 'IS 4984:1995 / ASTM D3035',
+        status: BoQStatus.fail,
+        recommendedStandard: 'IS 4984:2016 (PE-100)',
+        statutoryDefect:
+            'Superseded fourth revision + Supreme/Astral make restriction.',
+        recommendedAction:
+            'Mandate IS 4984:2016 PE-100 grade; brand-neutral specification.',
+        mandatoryQcoCited: false,
+        isBrandLocked: true,
+      ),
+      BoQItem(
+        itemNumber: 'ITEM 03',
+        description:
+            'Cast Iron Sluice Valves 150mm Nominal Diameter PN 1.6',
+        quantity: '12',
+        unit: 'Nos',
+        citedStandard: 'IS 14846:2000',
+        status: BoQStatus.warn,
+        recommendedStandard: 'IS 14846:2000 + Valves QCO 2023',
+        statutoryDefect:
+            'Correct standard cited but omits mandatory DPIIT Quality Control Order Scheme-I citation.',
+        recommendedAction:
+            'Incorporate Valves (Quality Control) Order 2023 compliance clause.',
+        mandatoryQcoCited: false,
+        isBrandLocked: false,
+      ),
+      BoQItem(
+        itemNumber: 'ITEM 04',
+        description: 'Galvanized Mild Steel Binding Wire 4mm Diameter',
+        quantity: '500',
+        unit: 'Kg',
+        citedStandard: 'IS 280:2006',
+        status: BoQStatus.pass,
+        recommendedStandard: 'IS 280:2006 (Current)',
+        statutoryDefect:
+            'None. Fully compliant with Steel Wire QCO and GFR 144(vii).',
+        recommendedAction: 'Approved for technical tender schedule.',
+        mandatoryQcoCited: true,
+        isBrandLocked: false,
+      ),
+      BoQItem(
+        itemNumber: 'ITEM 05',
+        description: 'Ductile Iron Flanged Pipe Fittings 200mm Diameter',
+        quantity: '24',
+        unit: 'Nos',
+        citedStandard: 'IS 9523:2000',
+        status: BoQStatus.pass,
+        recommendedStandard: 'IS 9523:2000 (Current)',
+        statutoryDefect:
+            'None. Generic technical description; active standard with ISI Mark.',
+        recommendedAction: 'Approved for technical tender schedule.',
+        mandatoryQcoCited: true,
+        isBrandLocked: false,
+      ),
+    ],
+  );
+
+  // ==========================================
+  // COMPREHENSIVE STANDARDS EXPLORER CATALOG
+  // ==========================================
+  static const List<Standard> allStandardsCatalog = [
+    Standard(
+      code: 'IS 1180 (Part 1):2014',
+      title:
+          'Outdoor Type Three-Phase Distribution Transformers Up To and Including 2500 kVA, 33 kV — Specification',
+      status: 'CURRENT',
+      division: 'Electrotechnical',
+      scope:
+          'Covers requirements and tests for outdoor type three-phase distribution transformers up to and including 2500 kVA, 33 kV.',
+      edition: 'Fifth Revision',
+      amendments: [
+        'Amd 1 (2016)',
+        'Amd 2 (2019)',
+        'Amd 3 (2021)',
+        'Amd 4 (2023)',
+      ],
+      mandatoryQco:
+          'Distribution Transformers (Quality Control) Order, 2014',
+      isQcoMandatory: true,
+      relatedStandards: [
+        'IS 335:2018',
+        'IS 2099:2018',
+        'IS 2026 (Part 1):2011',
+      ],
+    ),
+    Standard(
+      code: 'IS 1180:1989',
+      title:
+          'Outdoor Type Three-Phase Distribution Transformers — Specification',
+      status: 'SUPERSEDED',
+      replacementCode: 'IS 1180 (Part 1):2014',
+      division: 'Electrotechnical',
+      scope:
+          'Superseded fourth revision. Citing this standard in public tenders violates GFR 2017 Rule 144.',
+      edition: 'Fourth Revision (Obsolete)',
+      relatedStandards: ['IS 1180 (Part 1):2014'],
+    ),
+    Standard(
+      code: 'IS 335:2018',
+      title: 'New Insulating Oils — Specification',
+      status: 'CURRENT',
+      division: 'Electrotechnical',
+      scope:
+          'Specifies requirements and test methods for unused mineral insulating oils as delivered, for transformers, switchgear and similar electrical equipment.',
+      edition: 'Fifth Revision',
+      amendments: ['Amd 1 (2020)'],
+      relatedStandards: ['IS 1180 (Part 1):2014', 'IS 1866:2020'],
+    ),
+    Standard(
+      code: 'IS 335:1993',
+      title: 'New Insulating Oils — Specification',
+      status: 'SUPERSEDED',
+      replacementCode: 'IS 335:2018',
+      division: 'Electrotechnical',
+      scope:
+          'Superseded fourth revision. Must be replaced with IS 335:2018 in all electrical procurement.',
+      edition: 'Fourth Revision (Obsolete)',
+      relatedStandards: ['IS 335:2018'],
+    ),
+    Standard(
+      code: 'IS 4984:2016',
+      title:
+          'High Density Polyethylene Pipes for Water Supply — Specification',
+      status: 'CURRENT',
+      division: 'Civil Engineering',
+      scope:
+          'Covers requirements for high density polyethylene (HDPE) pipes from 16 mm to 1000 mm nominal diameter for water supply.',
+      edition: 'Fifth Revision',
+      amendments: ['Amd 1 (2018)', 'Amd 2 (2021)'],
+      mandatoryQco: 'Pipes and Fittings (Quality Control) Order, 2021',
+      isQcoMandatory: true,
+      relatedStandards: ['IS 2530:1963', 'IS 4985:2021', 'IS 7634 (Part 2):2012'],
+    ),
+    Standard(
+      code: 'IS 4984:1995',
+      title:
+          'High Density Polyethylene Pipes for Water Supply — Specification',
+      status: 'SUPERSEDED',
+      replacementCode: 'IS 4984:2016',
+      division: 'Civil Engineering',
+      scope: 'Superseded fourth revision of HDPE pipe specification.',
+      edition: 'Fourth Revision (Obsolete)',
+      relatedStandards: ['IS 4984:2016'],
+    ),
+    Standard(
+      code: 'IS 1786:2008',
+      title:
+          'High Strength Deformed Steel Bars and Wires for Concrete Reinforcement — Specification (Fe 500D)',
+      status: 'CURRENT',
+      division: 'Civil Engineering',
+      scope:
+          'Covers technical requirements and tests for high strength deformed steel bars and wires of grades Fe 415, Fe 415D, Fe 500, Fe 500D, Fe 550, Fe 550D and Fe 600.',
+      edition: 'Fourth Revision',
+      amendments: ['Amd 1 (2012)', 'Amd 2 (2014)', 'Amd 3 (2018)'],
+      mandatoryQco:
+          'Steel and Steel Products (Quality Control) Order, 2020',
+      isQcoMandatory: true,
+      relatedStandards: ['IS 432 (Part 1):1982', 'IS 2062:2011'],
+    ),
+    Standard(
+      code: 'IS 2099:2018',
+      title:
+          'Bushings for Alternating Voltages Above 1000 V — Specification',
+      status: 'CURRENT',
+      division: 'Electrotechnical',
+      scope:
+          'Applicable to outdoor and indoor bushings of ceramic, glass, or composite materials for alternating voltages above 1000 V.',
+      edition: 'Third Revision',
+      relatedStandards: ['IS 1180 (Part 1):2014', 'IS 3347'],
+    ),
+    Standard(
+      code: 'IS 2026 (Part 1):2011',
+      title: 'Power Transformers — Part 1: General',
+      status: 'CURRENT',
+      division: 'Electrotechnical',
+      scope:
+          'Applies to three-phase and single-phase power transformers (including auto-transformers).',
+      edition: 'Second Revision',
+      relatedStandards: ['IS 1180 (Part 1):2014', 'IS 2026 (Part 2)'],
+    ),
+    Standard(
+      code: 'IS 2530:1963',
+      title: 'Methods for Testing Plastics — Polyethylene',
+      status: 'CURRENT',
+      division: 'Chemical',
+      scope:
+          'Specifies test methods for determination of density, melt flow rate, carbon black content and dispersion in polyethylene materials.',
+      edition: 'First Edition',
+      relatedStandards: ['IS 4984:2016'],
+    ),
+    Standard(
+      code: 'IS 9523:2000',
+      title:
+          'Ductile Iron Fittings for Pressure Pipes for Water, Gas and Sewage — Specification',
+      status: 'CURRENT',
+      division: 'Mechanical',
+      scope:
+          'Covers requirements for ductile iron fittings suitable for jointing with ductile iron pipes.',
+      edition: 'Second Revision',
+      mandatoryQco:
+          'Ductile Iron Products (Quality Control) Order, 2022',
+      isQcoMandatory: true,
+      relatedStandards: ['IS 8329:2000'],
+    ),
+    Standard(
+      code: 'IS 14846:2000',
+      title:
+          'Sluice Valves for Water Works Purposes (50 to 1200 mm Size) — Specification',
+      status: 'CURRENT',
+      division: 'Mechanical',
+      scope:
+          'Specifies requirements for flanged sluice valves from 50 mm to 1200 mm size with inside screw, non-rising stem or outside screw rising stem.',
+      edition: 'First Edition',
+      mandatoryQco: 'Valves (Quality Control) Order, 2023',
+      isQcoMandatory: true,
+      relatedStandards: ['IS 778:1984'],
+    ),
+    Standard(
+      code: 'IS 280:2006',
+      title:
+          'Mild Steel Wire for General Engineering Purposes — Specification',
+      status: 'CURRENT',
+      division: 'Metallurgical',
+      scope:
+          'Covers requirements for mild steel wire of 0.122 mm to 12.5 mm diameter for general engineering purposes.',
+      edition: 'Fourth Revision',
+      mandatoryQco: 'Steel Wire (Quality Control) Order, 2021',
+      isQcoMandatory: true,
+      relatedStandards: ['IS 1786:2008'],
+    ),
+    Standard(
+      code: 'IS 694:2010',
+      title:
+          'Polyvinyl Chloride Insulated Unsheathed and Sheathed Cables/Cords with Rigid and Flexible Conductor for Working Voltages up to and Including 450/750 V — Specification',
+      status: 'CURRENT',
+      division: 'Electrotechnical',
+      scope:
+          'Specifies requirements for PVC insulated electric cables for working voltages up to 1100 V.',
+      edition: 'Fourth Revision',
+      mandatoryQco:
+          'Cables and Wires (Quality Control) Order, 2019',
+      isQcoMandatory: true,
+      relatedStandards: ['IS 1554 (Part 1):1988'],
+    ),
+    Standard(
+      code: 'IS 9537 (Part 1):1980',
+      title:
+          'Conduits for Electrical Installations — Part 1: General Requirements',
+      status: 'CURRENT',
+      division: 'Electrotechnical',
+      scope:
+          'Specifies requirements for conduits for electrical installations.',
+      edition: 'First Edition',
+      relatedStandards: ['IS 9537 (Part 2):1981'],
+    ),
+  ];
+
+  // ==========================================
+  // QUALITY CONTROL ORDERS (QCO) MASTER CATALOG
+  // ==========================================
+  static const List<QcoOrder> allQcoOrdersCatalog = [
+    QcoOrder(
+      id: 'qco-transformers',
+      orderName: 'Electrical Transformers (Quality Control) Order, 2024',
+      gazetteNo: 'S.O. 458(E)',
+      ministry: 'Ministry of Heavy Industries & Power',
+      scheme: 'Scheme-I (ISI Mark)',
+      enforcementDate: '01 Jan 2025',
+      status: 'ACTIVE',
+      standards: ['IS 1180 (Part 1):2014', 'IS 2026 (Part 1):2011'],
+      msmeConcession: '6 months extension for micro enterprises',
+      statutoryNote:
+          'Mandates compulsory Scheme-I ISI marking under Section 16 BIS Act, 2016. Prohibits manufacture, storage, and procurement of non-certified distribution transformers.',
+    ),
+    QcoOrder(
+      id: 'qco-pipes',
+      orderName: 'Pipes and Fittings (Quality Control) Order, 2020',
+      gazetteNo: 'S.O. 1289(E)',
+      ministry: 'Ministry of Chemicals & Fertilizers',
+      scheme: 'Scheme-I (ISI Mark)',
+      enforcementDate: '15 Mar 2021',
+      status: 'ACTIVE',
+      standards: ['IS 4984:2016', 'IS 4985:2021', 'IS 12235'],
+      msmeConcession: 'No exemption on potable water distribution conduits',
+      statutoryNote:
+          'Prohibits procurement of non-BIS certified HDPE and uPVC pipes for municipal and drinking water networks under penal sanctions.',
+    ),
+    QcoOrder(
+      id: 'qco-steel',
+      orderName: 'Steel and Steel Products (Quality Control) Order, 2020',
+      gazetteNo: 'S.O. 1678(E)',
+      ministry: 'Ministry of Steel',
+      scheme: 'Scheme-I (ISI Mark)',
+      enforcementDate: '18 Dec 2020',
+      status: 'ACTIVE',
+      standards: ['IS 1786:2008', 'IS 2062:2011', 'IS 432 (Part 1):1982'],
+      msmeConcession:
+          'Standard BIS concession for secondary rolling mills with valid BIS license',
+      statutoryNote:
+          'Mandates Scheme-I ISI Mark prior to dispatch. Foreign standards such as ASTM A615 cannot be accepted without domestic BIS equivalence.',
+    ),
+    QcoOrder(
+      id: 'qco-cables',
+      orderName: 'Electrical Wires and Cables (Quality Control) Order, 2023',
+      gazetteNo: 'S.O. 3145(E)',
+      ministry: 'Ministry of Commerce and Industry (DPIIT)',
+      scheme: 'Scheme-I (ISI Mark)',
+      enforcementDate: '01 Sep 2023',
+      status: 'ACTIVE',
+      standards: ['IS 694:2010', 'IS 1554 (Part 1):1988'],
+      msmeConcession:
+          'Standard 3-month transition window for small manufacturers',
+      statutoryNote:
+          'Mandates ISI mark on PVC and XLPE insulated building wires and control cables.',
+    ),
+    QcoOrder(
+      id: 'qco-valves',
+      orderName:
+          'Valves and Waterworks Fittings (Quality Control) Order, 2023',
+      gazetteNo: 'S.O. 2219(E)',
+      ministry: 'Ministry of Commerce and Industry (DPIIT)',
+      scheme: 'Scheme-I (ISI Mark)',
+      enforcementDate: '01 Nov 2023',
+      status: 'ACTIVE',
+      standards: ['IS 14846:2000', 'IS 9523:2000'],
+      msmeConcession: '6 months extension for micro manufacturers',
+      statutoryNote:
+          'Compulsory BIS certification for sluice valves, butterfly valves, and ductile iron pressure fittings.',
+    ),
+    QcoOrder(
+      id: 'qco-water',
+      orderName: 'Drinking Water (Quality Control) Order, 2021',
+      gazetteNo: 'S.O. 882(E)',
+      ministry:
+          'Ministry of Consumer Affairs, Food & Public Distribution',
+      scheme: 'Scheme-I (ISI Mark)',
+      enforcementDate: '01 Jan 2022',
+      status: 'ACTIVE',
+      standards: ['IS 10500:2012'],
+      msmeConcession: 'Mandatory across all public water utilities',
+      statutoryNote:
+          'Prescribes uniform statutory water quality parameters across all municipal distribution grids.',
+    ),
+  ];
+
+  // ==========================================
+  // EDITABLE TECHNICAL PARAMETERS & CONFLICT LOGIC
+  // ==========================================
+  static List<SpecificationParameter> getParametersForPreset(String? presetId) {
+    final norm = normalizePresetId(presetId);
+    if (norm == 'pipe') {
+      return [
+        const SpecificationParameter(
+          id: 'pipe-mat',
+          name: 'Material Grade',
+          currentValue: 'PE-100',
+          options: ['PE-100', 'PE-80', 'PE-63'],
+          standardReference: 'IS 4984:2016 Table 1',
+        ),
+        const SpecificationParameter(
+          id: 'pipe-pn',
+          name: 'Pressure Rating',
+          currentValue: 'PN 10',
+          options: ['PN 6', 'PN 10', 'PN 12.5', 'PN 16'],
+          standardReference: 'IS 4984:2016 Table 2',
+        ),
+        const SpecificationParameter(
+          id: 'pipe-sdr',
+          name: 'Standard Dimension Ratio',
+          currentValue: 'SDR 11',
+          options: ['SDR 17', 'SDR 13.6', 'SDR 11', 'SDR 9'],
+          standardReference: 'IS 4984:2016 Table 2',
+        ),
+        const SpecificationParameter(
+          id: 'pipe-dia',
+          name: 'Nominal Outer Diameter',
+          currentValue: '110 mm',
+          options: ['110 mm', '160 mm', '200 mm', '315 mm', '500 mm'],
+          standardReference: 'IS 4984:2016 Table 3',
+        ),
+      ];
+    }
+    if (norm == 'steel') {
+      return [
+        const SpecificationParameter(
+          id: 'steel-grade',
+          name: 'Steel Strength Grade',
+          currentValue: 'Fe 500D',
+          options: [
+            'Fe 415',
+            'Fe 415D',
+            'Fe 500',
+            'Fe 500D',
+            'Fe 550D',
+            'ASTM A615 (Foreign)',
+          ],
+          standardReference: 'IS 1786:2008 Table 3',
+        ),
+        const SpecificationParameter(
+          id: 'steel-dia',
+          name: 'Nominal Bar Diameter',
+          currentValue: '16 mm',
+          options: [
+            '8 mm',
+            '10 mm',
+            '12 mm',
+            '16 mm',
+            '20 mm',
+            '25 mm',
+            '32 mm',
+          ],
+          standardReference: 'IS 1786:2008 Table 1',
+        ),
+        const SpecificationParameter(
+          id: 'steel-producer',
+          name: 'Approved Producer Scope',
+          currentValue: 'Any BIS Certified Producer',
+          options: [
+            'Any BIS Certified Producer',
+            'Tata / Jindal Lock-in',
+            'Primary Producers Only',
+          ],
+          standardReference: 'CVC OM No. 03-05-01',
+        ),
+      ];
+    }
+    // Default: transformer
+    return [
+      const SpecificationParameter(
+        id: 'trans-rating',
+        name: 'Rated Output Power',
+        currentValue: '500 kVA',
+        options: ['100 kVA', '250 kVA', '500 kVA', '1000 kVA'],
+        standardReference: 'IS 1180 (Part 1):2014 Table 1',
+      ),
+      const SpecificationParameter(
+        id: 'trans-voltage',
+        name: 'Primary / Secondary Voltage',
+        currentValue: '11 kV / 433 V',
+        options: ['11 kV / 433 V', '22 kV / 433 V', '33 kV / 433 V'],
+        standardReference: 'IS 1180 (Part 1):2014 Table 1',
+      ),
+      const SpecificationParameter(
+        id: 'trans-oil',
+        name: 'Insulating Dielectric Fluid',
+        currentValue: 'IS 335:2018 Mineral Oil',
+        options: [
+          'IS 335:2018 Mineral Oil',
+          'IS 335:1993 (Obsolete)',
+          'Synthetic Ester to IS 16081',
+        ],
+        standardReference: 'IS 335:2018 Clause 4',
+      ),
+      const SpecificationParameter(
+        id: 'trans-bushing',
+        name: 'High Voltage Bushing Type',
+        currentValue: 'Generic IS 2099 Porcelain',
+        options: [
+          'Generic IS 2099 Porcelain',
+          'ABB Make Lock-in',
+          'Siemens Make Lock-in',
+        ],
+        standardReference: 'IS 2099:2018 & CVC Rules',
+      ),
+    ];
+  }
+
+  static List<SpecificationParameter> evaluateParameterConflicts(
+    String? presetId,
+    List<SpecificationParameter> params,
+  ) {
+    final norm = normalizePresetId(presetId);
+    return params.map((p) {
+      if (norm == 'pipe') {
+        final mat = params
+            .firstWhere(
+              (x) => x.id == 'pipe-mat',
+              orElse: () => p,
+            )
+            .currentValue;
+        final pn = params
+            .firstWhere(
+              (x) => x.id == 'pipe-pn',
+              orElse: () => p,
+            )
+            .currentValue;
+        final sdr = params
+            .firstWhere(
+              (x) => x.id == 'pipe-sdr',
+              orElse: () => p,
+            )
+            .currentValue;
+
+        if (p.id == 'pipe-mat' || p.id == 'pipe-pn' || p.id == 'pipe-sdr') {
+          if (mat == 'PE-80' && pn == 'PN 16' && sdr == 'SDR 11') {
+            return p.copyWith(
+              hasConflict: true,
+              isVerified: false,
+              conflictReason:
+                  'CONFLICT: PE-80 material at SDR 11 cannot sustain PN 16 pressure under IS 4984 Table 2. Upgrade to PE-100 or reduce SDR to SDR 9.',
+            );
+          }
+          if (mat == 'PE-63' && (pn == 'PN 10' || pn == 'PN 16')) {
+            return p.copyWith(
+              hasConflict: true,
+              isVerified: false,
+              conflictReason:
+                  'CONFLICT: PE-63 material is obsolete for municipal pressure networks above PN 6 under BIS guidelines.',
+            );
+          }
+        }
+      } else if (norm == 'steel') {
+        if (p.id == 'steel-grade' && p.currentValue.contains('ASTM')) {
+          return p.copyWith(
+            hasConflict: true,
+            isVerified: false,
+            conflictReason:
+                'CONFLICT: Citing foreign standard ASTM A615 violates GFR 2017 Rule 144(vii). Must cite IS 1786:2008 Fe 500D.',
+          );
+        }
+        if (p.id == 'steel-producer' && p.currentValue.contains('Lock-in')) {
+          return p.copyWith(
+            hasConflict: true,
+            isVerified: false,
+            conflictReason:
+                'CONFLICT: Specifying proprietary trade names violates CVC Anti-Tailoring Directives. Must remain manufacturer-neutral.',
+          );
+        }
+      } else {
+        if (p.id == 'trans-oil' && p.currentValue.contains('1993')) {
+          return p.copyWith(
+            hasConflict: true,
+            isVerified: false,
+            conflictReason:
+                'CONFLICT: IS 335:1993 is superseded by IS 335:2018. Citing obsolete standards violates quality directives.',
+          );
+        }
+        if (p.id == 'trans-bushing' && p.currentValue.contains('Lock-in')) {
+          return p.copyWith(
+            hasConflict: true,
+            isVerified: false,
+            conflictReason:
+                'CONFLICT: Vendor brand lock-in violates CVC guidelines. Must cite generic IS 2099 specifications.',
+          );
+        }
+      }
+      return p.copyWith(
+        hasConflict: false,
+        isVerified: true,
+        conflictReason: null,
+      );
+    }).toList();
+  }
+
+  // ==========================================
+  // HUMAN REVIEW ACTIONS INITIAL STATE
+  // ==========================================
+  static List<ReviewAction> getInitialReviewActions(String? presetId) {
+    final norm = normalizePresetId(presetId);
+    if (norm == 'pipe') {
+      return const [
+        ReviewAction(
+          findingId: 'pipe-flag-0',
+          status: ReviewStatus.pending,
+          officerName: officerName,
+          officerId: officerId,
+          formattedTimestamp: '11-Sep-2026, 14:15 IST',
+        ),
+        ReviewAction(
+          findingId: 'pipe-flag-1',
+          status: ReviewStatus.pending,
+          officerName: officerName,
+          officerId: officerId,
+          formattedTimestamp: '11-Sep-2026, 14:15 IST',
+        ),
+      ];
+    }
+    if (norm == 'steel') {
+      return const [
+        ReviewAction(
+          findingId: 'steel-flag-0',
+          status: ReviewStatus.pending,
+          officerName: officerName,
+          officerId: officerId,
+          formattedTimestamp: '11-Sep-2026, 11:30 IST',
+        ),
+        ReviewAction(
+          findingId: 'steel-flag-1',
+          status: ReviewStatus.pending,
+          officerName: officerName,
+          officerId: officerId,
+          formattedTimestamp: '11-Sep-2026, 11:30 IST',
+        ),
+      ];
+    }
+    return const [
+      ReviewAction(
+        findingId: 'trans-flag-0',
+        status: ReviewStatus.pending,
+        officerName: officerName,
+        officerId: officerId,
+        formattedTimestamp: '11-Sep-2026, 09:45 IST',
+      ),
+      ReviewAction(
+        findingId: 'trans-flag-1',
+        status: ReviewStatus.pending,
+        officerName: officerName,
+        officerId: officerId,
+        formattedTimestamp: '11-Sep-2026, 09:45 IST',
+      ),
+    ];
+  }
+
+  // ==========================================
+  // PHASE 5: DECISION TRACE, WHY THIS STANDARD & AMENDMENT DIFF
+  // ==========================================
+  static DecisionTrace getDecisionTraceForPreset(String? presetId) {
+    final norm = normalizePresetId(presetId);
+    if (norm == 'out_of_coverage') {
+      return const DecisionTrace(
+        tenderId: 'NIT-UNKNOWN-000',
+        tenderTitle: 'Unindexed Commodity Specification',
+        department: 'General Procurement Directorate',
+        inputClause: 'Unindexed tender specification',
+        extractedRequirements: [
+          TraceRequirement(
+            parameter: 'Product Classification',
+            specifiedValue: 'Unindexed Commodity / Clause',
+            state: KnowledgeState.outOfCoverage,
+            note: 'No semantic match in 23,000+ indexed Indian Standards.',
+          ),
+          TraceRequirement(
+            parameter: 'Standards Citation',
+            specifiedValue: 'None detected or unverified code',
+            state: KnowledgeState.unknown,
+            note: 'Insufficient evidence to resolve governing Sectional Committee schedule.',
+          ),
+        ],
+        retrievedCandidates: [],
+        selectionReason:
+            'No matching Indian Standard could be authoritatively selected. Dataset coverage does not currently index this product category.',
+        exclusionReasons: [
+          'All indexed standard clusters rejected due to lack of semantic and scope alignment.',
+        ],
+        selectedStandard: null,
+        lifecycleState: 'OUT-OF-COVERAGE',
+        evidence: null,
+        verificationState: KnowledgeState.outOfCoverage,
+        finalRecommendation:
+            'Initiate manual standards inquiry on BIS Manakonline portal (manakonline.in) or request standard specification from the administrative ministry.',
+        humanApprovalState: 'MANUAL ACTION REQUIRED',
+      );
+    }
+    if (norm == 'pipe') {
+      return DecisionTrace(
+        tenderId: 'NIT-MWS-4984',
+        tenderTitle: 'HDPE Water Supply Pipeline',
+        department: 'Municipal Water Supply Directorate',
+        inputClause: presets[0]['clause']!,
+        extractedRequirements: const [
+          TraceRequirement(
+            parameter: 'Material Classification',
+            specifiedValue: 'PE-100 Polyethylene Resin',
+            state: KnowledgeState.verified,
+            note: 'Direct match with IS 4984 Section 4 raw material requirement',
+          ),
+          TraceRequirement(
+            parameter: 'Nominal Pressure Rating',
+            specifiedValue: 'PN 10 (1.0 MPa at 27°C)',
+            state: KnowledgeState.verified,
+            note: 'Standard pressure series listed in IS 4984 Table 2',
+          ),
+          TraceRequirement(
+            parameter: 'Standard Dimension Ratio',
+            specifiedValue: 'SDR 11 (Controlled Outside Diameter)',
+            state: KnowledgeState.verified,
+            note: 'Dimension series conforming to IS 4984 Clause 6',
+          ),
+          TraceRequirement(
+            parameter: 'Primary Standard Citation',
+            specifiedValue: 'IS 4984:1995 (Fourth Revision)',
+            state: KnowledgeState.conflicting,
+            note: 'Obsolete citation; superseded by IS 4984:2016',
+          ),
+          TraceRequirement(
+            parameter: 'Foreign Standard Citation',
+            specifiedValue: 'ASTM D3035',
+            state: KnowledgeState.conflicting,
+            note: 'Prohibited under GFR 2017 Rule 144(vii) when national standard exists',
+          ),
+          TraceRequirement(
+            parameter: 'Proprietary Trade Names',
+            specifiedValue: 'Supreme / Astral Pipes',
+            state: KnowledgeState.conflicting,
+            note: 'Restricts competition; prohibited under CVC OM 03-05-1',
+          ),
+        ],
+        retrievedCandidates: const [
+          TraceCandidate(
+            standardCode: 'IS 4984:2016',
+            title: 'High Density Polyethylene Pipes for Water Supply — Specification',
+            rank: 1,
+            retrievalScore: 0.96,
+            isSelected: true,
+            considerationReason: 'Direct domain match for HDPE pipes for potable water conveyance',
+            rejectionReason: null,
+            state: KnowledgeState.verified,
+          ),
+          TraceCandidate(
+            standardCode: 'IS 4984:1995',
+            title: 'High Density Polyethylene Pipes for Water Supply (Fourth Revision)',
+            rank: 2,
+            retrievalScore: 0.88,
+            isSelected: false,
+            considerationReason: 'Direct text mention in tender clause',
+            rejectionReason: 'Superseded fourth revision; citing obsolete standard violates GFR Rule 144',
+            state: KnowledgeState.conflicting,
+          ),
+          TraceCandidate(
+            standardCode: 'ASTM D3035',
+            title: 'Specification for Polyethylene Plastic Pipe Based on Controlled OD',
+            rank: 3,
+            retrievalScore: 0.79,
+            isSelected: false,
+            considerationReason: 'Cited as alternative standard in tender specification',
+            rejectionReason: 'Foreign standard; mandatory national standard IS 4984:2016 is in force',
+            state: KnowledgeState.conflicting,
+          ),
+          TraceCandidate(
+            standardCode: 'IS 4985:2021',
+            title: 'Unplasticized PVC Pipes for Potable Water Supplies — Specification',
+            rank: 4,
+            retrievalScore: 0.54,
+            isSelected: false,
+            considerationReason: 'Potable water conveyance piping',
+            rejectionReason: 'Governs unplasticized PVC (uPVC) pipes; incompatible with PE resin',
+            state: KnowledgeState.outOfCoverage,
+          ),
+        ],
+        selectionReason:
+            'IS 4984:2016 is the active fifth revision governing high density polyethylene pipes for potable water conveyance. It provides verified tables for PE-100 material at PN 10 pressure rating and is mandatorily enforced under DPIIT Pipes QCO 2021.',
+        exclusionReasons: const [
+          'IS 4984:1995: Superseded by fifth revision; citing obsolete standard restricts competitive bidding and violates GFR 2017 Rule 144(vii).',
+          'ASTM D3035: Foreign US standard; GFR 2017 Rule 144(vii) prohibits mandating foreign standards when national standards exist.',
+          'IS 4985:2021: Applies strictly to uPVC conduits; incompatible with PE material requirement.',
+        ],
+        selectedStandard: pipeAnalysis.detectedStandards[0],
+        lifecycleState: 'CURRENT',
+        evidence: pipeAnalysis.detectedStandards[0].evidence,
+        verificationState: KnowledgeState.verified,
+        finalRecommendation:
+            'Rectify tender to mandate IS 4984:2016 (PE-100, PN 10, SDR 11) with compulsory BIS Standard Mark (ISI license) under Pipes QCO 2021. Remove proprietary trade makes.',
+        humanApprovalState: 'PENDING REVIEW',
+      );
+    }
+    if (norm == 'steel') {
+      return DecisionTrace(
+        tenderId: 'NIT-PWD-1786',
+        tenderTitle: 'TMT Reinforcement Steel Rebars',
+        department: 'Public Works Department (Buildings)',
+        inputClause: presets[2]['clause']!,
+        extractedRequirements: const [
+          TraceRequirement(
+            parameter: 'Material Classification',
+            specifiedValue: 'High Strength Deformed Steel Bars (TMT)',
+            state: KnowledgeState.verified,
+            note: 'Governed by IS 1786:2008 for concrete reinforcement',
+          ),
+          TraceRequirement(
+            parameter: 'Steel Grade',
+            specifiedValue: 'Fe 500D (Ductile Grade)',
+            state: KnowledgeState.verified,
+            note: 'High elongation grade (min 16%) required for earthquake zones',
+          ),
+          TraceRequirement(
+            parameter: 'Foreign Standard Citation',
+            specifiedValue: 'ASTM A615 (US Standard)',
+            state: KnowledgeState.conflicting,
+            note: 'Foreign standard cited without domestic equivalence clause',
+          ),
+          TraceRequirement(
+            parameter: 'Proprietary Brand Lock-in',
+            specifiedValue: 'Tata Tiscon / Jindal Panther only',
+            state: KnowledgeState.conflicting,
+            note: 'Violates CVC Anti-Tailoring Directives; excludes primary/secondary BIS producers',
+          ),
+        ],
+        retrievedCandidates: const [
+          TraceCandidate(
+            standardCode: 'IS 1786:2008',
+            title: 'High Strength Deformed Steel Bars and Wires for Concrete Reinforcement',
+            rank: 1,
+            retrievalScore: 0.97,
+            isSelected: true,
+            considerationReason: 'Direct national standard governing TMT rebar reinforcement',
+            rejectionReason: null,
+            state: KnowledgeState.verified,
+          ),
+          TraceCandidate(
+            standardCode: 'ASTM A615',
+            title: 'Standard Specification for Deformed and Plain Carbon-Steel Bars',
+            rank: 2,
+            retrievalScore: 0.76,
+            isSelected: false,
+            considerationReason: 'Cited in tender document text',
+            rejectionReason: 'Foreign code; national standard IS 1786:2008 is mandatory under Steel QCO',
+            state: KnowledgeState.conflicting,
+          ),
+          TraceCandidate(
+            standardCode: 'IS 2062:2011',
+            title: 'Hot Rolled Medium and High Tensile Structural Steel — Specification',
+            rank: 3,
+            retrievalScore: 0.58,
+            isSelected: false,
+            considerationReason: 'Structural steel standard',
+            rejectionReason: 'Governs structural sections and plates; not applicable to concrete rebar',
+            state: KnowledgeState.outOfCoverage,
+          ),
+        ],
+        selectionReason:
+            'IS 1786:2008 is the mandated Indian Standard for High Strength Deformed Steel Bars for Concrete Reinforcement under the Steel and Steel Products (Quality Control) Order, 2020.',
+        exclusionReasons: const [
+          'ASTM A615: Foreign code; domestic BIS standard IS 1786:2008 is mandatory under Ministry of Steel QCO.',
+          'IS 2062:2011: Structural steel plates and sections; inappropriate for concrete reinforcement rebar.',
+        ],
+        selectedStandard: steelAnalysis.detectedStandards[0],
+        lifecycleState: 'CURRENT',
+        evidence: steelAnalysis.detectedStandards[0].evidence,
+        verificationState: KnowledgeState.verified,
+        finalRecommendation:
+            'Mandate IS 1786:2008 Fe 500D with compulsory ISI mark; remove proprietary steel brand names.',
+        humanApprovalState: 'PENDING REVIEW',
+      );
+    }
+    // Default: Distribution Transformers
+    return DecisionTrace(
+      tenderId: 'NIT-DISCOM-1180',
+      tenderTitle: 'Distribution Transformers 500 kVA',
+      department: 'State Power Distribution Corporation Ltd.',
+      inputClause: presets[1]['clause']!,
+      extractedRequirements: const [
+        TraceRequirement(
+          parameter: 'Rating / Capacity',
+          specifiedValue: '500 kVA, 11/0.433 kV',
+          state: KnowledgeState.verified,
+          note: 'Covered under IS 1180 (Part 1):2014 up to 2500 kVA',
+        ),
+        TraceRequirement(
+          parameter: 'Primary Standard Citation',
+          specifiedValue: 'IS 1180:1989',
+          state: KnowledgeState.conflicting,
+          note: 'Obsolete fourth revision; superseded by IS 1180 (Part 1):2014',
+        ),
+        TraceRequirement(
+          parameter: 'Insulating Oil Specification',
+          specifiedValue: 'IS 335:1993',
+          state: KnowledgeState.conflicting,
+          note: 'Obsolete citation; superseded by IS 335:2018',
+        ),
+        TraceRequirement(
+          parameter: 'Proprietary Bushing OEM',
+          specifiedValue: 'ABB or Siemens make only',
+          state: KnowledgeState.conflicting,
+          note: 'Brand lock-in without functional equivalence clause; violates CVC guidelines',
+        ),
+      ],
+      retrievedCandidates: const [
+        TraceCandidate(
+          standardCode: 'IS 1180 (Part 1):2014',
+          title: 'Outdoor Type Three-Phase Distribution Transformers Up To 2500 kVA',
+          rank: 1,
+          retrievalScore: 0.98,
+          isSelected: true,
+          considerationReason: 'Direct domain match for three-phase distribution transformers',
+          rejectionReason: null,
+          state: KnowledgeState.verified,
+        ),
+        TraceCandidate(
+          standardCode: 'IS 1180:1989',
+          title: 'Outdoor Type Three-Phase Distribution Transformers (Fourth Revision)',
+          rank: 2,
+          retrievalScore: 0.85,
+          isSelected: false,
+          considerationReason: 'Cited in tender text',
+          rejectionReason: 'Obsolete fourth revision; illegal for public procurement under GFR 144',
+          state: KnowledgeState.conflicting,
+        ),
+        TraceCandidate(
+          standardCode: 'IS 2026 (Part 1):2011',
+          title: 'Power Transformers — General Specification',
+          rank: 3,
+          retrievalScore: 0.62,
+          isSelected: false,
+          considerationReason: 'General electrical transformer standard',
+          rejectionReason: 'Intended for large power transformers (>2500 kVA); does not govern distribution ratings',
+          state: KnowledgeState.inferred,
+        ),
+      ],
+      selectionReason:
+          'IS 1180 (Part 1):2014 is the active fifth revision and is subject to the statutory Electrical Transformers (Quality Control) Order, 2024. Mandates Scheme-I ISI license.',
+      exclusionReasons: const [
+        'IS 1180:1989: Obsolete revision; non-compliant with GFR 144.',
+        'IS 2026: Intended for power transformers, not distribution ratings under 2500 kVA.',
+      ],
+      selectedStandard: transformerAnalysis.detectedStandards[0],
+      lifecycleState: 'CURRENT',
+      evidence: transformerAnalysis.detectedStandards[0].evidence,
+      verificationState: KnowledgeState.verified,
+      finalRecommendation:
+          'Replace IS 1180:1989 with IS 1180 (Part 1):2014, mandate Scheme-I ISI license, update oil to IS 335:2018, and strip proprietary bushing brands.',
+      humanApprovalState: 'PENDING REVIEW',
+    );
+  }
+
+  static WhyThisStandard getWhyThisStandard(String standardCode) {
+    final clean = standardCode.toUpperCase();
+    if (clean.contains('4984')) {
+      return const WhyThisStandard(
+        standardCode: 'IS 4984:2016',
+        title: 'High Density Polyethylene Pipes for Water Supply — Specification',
+        matchedRequirements: {
+          'Product Category': 'High Density Polyethylene (HDPE) Pipes',
+          'Raw Material': 'PE-100 virgin grade polymer granules conforming to IS 2530',
+          'Pressure Compatibility': 'PN 2.5 to PN 16 (0.25 MPa to 1.6 MPa)',
+          'Dimension Range': '16 mm to 1000 mm nominal outer diameter',
+          'Application': 'Buried municipal potable water distribution networks',
+          'Regulatory Constraint': 'Mandatory Scheme-I ISI license under DPIIT Pipes QCO 2021',
+        },
+        verificationSummary:
+            'Direct match with municipal water pipeline technical scope. Standard is active (Fifth Revision with Amendments 1 & 2) and backed by authoritative gazetted evidence.',
+        knowledgeState: KnowledgeState.verified,
+        isEvidenceAvailable: true,
+        alternativesConsidered: [
+          AlternativeConsidered(
+            standardCode: 'IS 4984:1995',
+            title: 'High Density Polyethylene Pipes for Water Supply (Fourth Revision)',
+            whyConsidered: 'Cited directly in tender clause',
+            whyRejected: 'Superseded fourth revision; non-compliant with GFR 2017 Rule 144(vii)',
+            status: KnowledgeState.conflicting,
+          ),
+          AlternativeConsidered(
+            standardCode: 'ASTM D3035',
+            title: 'Specification for Polyethylene Plastic Pipe Based on Controlled OD',
+            whyConsidered: 'Cited as alternative standard in specification',
+            whyRejected: 'Foreign standard cited without domestic equivalence clause; GFR 144(vii) breach',
+            status: KnowledgeState.conflicting,
+          ),
+          AlternativeConsidered(
+            standardCode: 'IS 4985:2021',
+            title: 'Unplasticized PVC Pipes for Potable Water Supplies',
+            whyConsidered: 'Potable water distribution pipeline standard',
+            whyRejected: 'Applies strictly to unplasticized PVC (uPVC) pipes, not HDPE',
+            status: KnowledgeState.outOfCoverage,
+          ),
+        ],
+      );
+    }
+    if (clean.contains('1180')) {
+      return const WhyThisStandard(
+        standardCode: 'IS 1180 (Part 1):2014',
+        title: 'Outdoor Type Three-Phase Distribution Transformers Up To 2500 kVA',
+        matchedRequirements: {
+          'Product Category': 'Outdoor Three-Phase Distribution Transformers',
+          'Rating Range': 'Up to and including 2500 kVA, 33 kV',
+          'Insulating Liquid': 'Mineral Insulating Oil conforming to IS 335:2018',
+          'Energy Efficiency': 'Standard maximum total losses at 50% & 100% loading (BEE Star Ratings)',
+          'Regulatory Constraint': 'Compulsory Scheme-I ISI Mark under Transformers QCO 2024',
+        },
+        verificationSummary:
+            'Mandatory standard for distribution transformers under 2500 kVA. Replaces obsolete 1989 edition and enforces BEE star labeling and BIS certification.',
+        knowledgeState: KnowledgeState.verified,
+        isEvidenceAvailable: true,
+        alternativesConsidered: [
+          AlternativeConsidered(
+            standardCode: 'IS 1180:1989',
+            title: 'Outdoor Distribution Transformers (Fourth Revision)',
+            whyConsidered: 'Cited in tender specification',
+            whyRejected: 'Superseded fourth revision; illegal for public procurement under GFR 144',
+            status: KnowledgeState.conflicting,
+          ),
+          AlternativeConsidered(
+            standardCode: 'IS 2026 (Part 1):2011',
+            title: 'Power Transformers — General Specification',
+            whyConsidered: 'General transformer standard',
+            whyRejected: 'Governs large power transformers (>2500 kVA); does not cover distribution ratings',
+            status: KnowledgeState.inferred,
+          ),
+        ],
+      );
+    }
+    if (clean.contains('1786')) {
+      return const WhyThisStandard(
+        standardCode: 'IS 1786:2008',
+        title: 'High Strength Deformed Steel Bars and Wires for Concrete Reinforcement',
+        matchedRequirements: {
+          'Product Category': 'High Strength Deformed Steel Bars and Wires (TMT)',
+          'Grade': 'Fe 500D (Yield stress >= 500 MPa, Elongation >= 16%)',
+          'Application': 'Concrete reinforcement in civil structural works',
+          'Regulatory Constraint': 'Mandatory ISI mark under Steel and Steel Products QCO 2020',
+        },
+        verificationSummary:
+            'Exclusive governing standard for high-strength deformed rebar. Enforces chemical composition (C, S, P limits) and mechanical ductility.',
+        knowledgeState: KnowledgeState.verified,
+        isEvidenceAvailable: true,
+        alternativesConsidered: [
+          AlternativeConsidered(
+            standardCode: 'ASTM A615',
+            title: 'Standard Specification for Deformed Carbon-Steel Bars',
+            whyConsidered: 'Cited in tender clause',
+            whyRejected: 'Foreign standard; GFR 2017 prohibits foreign codes when Indian Standards exist',
+            status: KnowledgeState.conflicting,
+          ),
+          AlternativeConsidered(
+            standardCode: 'IS 2062:2011',
+            title: 'Hot Rolled Medium and High Tensile Structural Steel',
+            whyConsidered: 'Steel structural specification',
+            whyRejected: 'Covers hot rolled structural steel sections (beams/columns), not concrete reinforcement rebar',
+            status: KnowledgeState.outOfCoverage,
+          ),
+        ],
+      );
+    }
+    // Fallback for unindexed or unknown standards
+    return WhyThisStandard.insufficientEvidence(standardCode);
+  }
+
+  static AmendmentDiff getAmendmentDiff(String standardCode) {
+    final clean = standardCode.toUpperCase();
+    if (clean.contains('4984')) {
+      return const AmendmentDiff(
+        standardCode: 'IS 4984:2016',
+        title: 'High Density Polyethylene Pipes for Water Supply — Specification',
+        currentEdition: 'Fifth Revision (2016)',
+        previousEdition: 'Fourth Revision (1995)',
+        supersessionTransition:
+            'IS 4984:2016 superseded IS 4984:1995. Key upgrades include introduction of PE-100 material grade, enhanced hydrostatic pressure test duration (165 hours at 80°C), and updated wall thickness tolerances.',
+        amendments: [
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 1',
+            dateOrYear: 'July 2018',
+            gazetteReference: 'BIS/CMD/14:4984/A-1',
+            scopeSummary:
+                'Revised Table 2 minimum wall thickness tolerances and added requirements for coiled pipe ovality.',
+            state: KnowledgeState.verified,
+          ),
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 2',
+            dateOrYear: 'November 2021',
+            gazetteReference: 'BIS/CMD/14:4984/A-2',
+            scopeSummary:
+                'Incorporated carbon black dispersion test guidelines and aligned with Pipes QCO 2021 enforcement.',
+            state: KnowledgeState.verified,
+          ),
+        ],
+        hasClauseDiffData: false,
+        diffNotice:
+            'Detailed amendment diff unavailable in current dataset. Gazette metadata and lifecycle relations are verified.',
+      );
+    }
+    if (clean.contains('1180')) {
+      return const AmendmentDiff(
+        standardCode: 'IS 1180 (Part 1):2014',
+        title: 'Outdoor Type Three-Phase Distribution Transformers Up To 2500 kVA',
+        currentEdition: 'Fifth Revision (2014)',
+        previousEdition: 'Fourth Revision (1989)',
+        supersessionTransition:
+            'IS 1180 (Part 1):2014 superseded IS 1180:1989. Key upgrades include mandatory maximum total losses at 50% and 100% loading (BEE Star 1 to 5), short-circuit withstand thermal test mandates, and integration with BIS Scheme-I compulsory certification.',
+        amendments: [
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 1',
+            dateOrYear: 'March 2016',
+            gazetteReference: 'ETD 16 (1180)/A-1',
+            scopeSummary:
+                'Clarified testing procedures for corrugated tank hermetically sealed distribution transformers.',
+            state: KnowledgeState.verified,
+          ),
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 2',
+            dateOrYear: 'August 2019',
+            gazetteReference: 'ETD 16 (1180)/A-2',
+            scopeSummary:
+                'Updated total loss limits at 50% and 100% loading in Table 3 for higher energy conservation.',
+            state: KnowledgeState.verified,
+          ),
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 3',
+            dateOrYear: 'February 2021',
+            gazetteReference: 'ETD 16 (1180)/A-3',
+            scopeSummary:
+                'Updated dielectric test voltages for lightning impulse test protocols.',
+            state: KnowledgeState.verified,
+          ),
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 4',
+            dateOrYear: 'October 2023',
+            gazetteReference: 'ETD 16 (1180)/A-4',
+            scopeSummary:
+                'Aligned with Electrical Transformers (Quality Control) Order, 2024.',
+            state: KnowledgeState.verified,
+          ),
+        ],
+        hasClauseDiffData: false,
+        diffNotice:
+            'Detailed amendment diff unavailable in current dataset. Gazette metadata and lifecycle relations are verified.',
+      );
+    }
+    if (clean.contains('1786')) {
+      return const AmendmentDiff(
+        standardCode: 'IS 1786:2008',
+        title: 'High Strength Deformed Steel Bars and Wires for Concrete Reinforcement',
+        currentEdition: 'Fourth Revision (2008)',
+        previousEdition: 'Third Revision (1985)',
+        supersessionTransition:
+            'IS 1786:2008 superseded IS 1786:1985. Introduced Fe 500D, Fe 550D, and Fe 600 grades with superior elongation and seismic bendability requirements.',
+        amendments: [
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 1',
+            dateOrYear: 'January 2012',
+            gazetteReference: 'CED 54 (1786)/A-1',
+            scopeSummary:
+                'Clarified carbon equivalent (CE) formula and phosphorus/sulfur limits.',
+            state: KnowledgeState.verified,
+          ),
+          AmendmentRecord(
+            amendmentNumber: 'Amendment No. 2',
+            dateOrYear: 'September 2017',
+            gazetteReference: 'CED 54 (1786)/A-2',
+            scopeSummary:
+                'Enforced mandatory micro-alloying disclosure requirements and fatigue testing.',
+            state: KnowledgeState.verified,
+          ),
+        ],
+        hasClauseDiffData: false,
+        diffNotice:
+            'Detailed amendment diff unavailable in current dataset. Gazette metadata and lifecycle relations are verified.',
+      );
+    }
+    return AmendmentDiff(
+      standardCode: standardCode,
+      title: 'Standard Lifecycle & Amendments',
+      currentEdition: 'Active Revision',
+      amendments: const [],
+      hasClauseDiffData: false,
+      diffNotice:
+          'Detailed amendment diff unavailable in current dataset. Consult standard detail for verified lifecycle relationships.',
+    );
+  }
 }

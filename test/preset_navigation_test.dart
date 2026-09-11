@@ -14,7 +14,8 @@ void main() {
     });
 
     // 1. Pump the App
-    await tester.pumpWidget(const ManakSetuApp());
+    await tester
+        .pumpWidget(const ManakSetuApp(initialLocation: '/tender-scrutiny'));
     await tester.pumpAndSettle();
 
     // ==========================================

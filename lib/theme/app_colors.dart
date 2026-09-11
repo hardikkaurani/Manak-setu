@@ -56,6 +56,7 @@ abstract final class AppColors {
   static const Color reviewBorder = Color(0xFFFFD54F);
 
   static const Color nonCompliantBg = Color(0xFFFFEDEA);
+  static const Color nonCompliantSurface = Color(0xFFFFEDEA);
   static const Color nonCompliantText = Color(0xFFBA1A1A);
   static const Color nonCompliantBorder = Color(0xFFFF897D);
 

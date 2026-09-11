@@ -14,7 +14,8 @@ void main() {
       });
 
       // Pump App
-      await tester.pumpWidget(const ManakSetuApp());
+      await tester
+          .pumpWidget(const ManakSetuApp(initialLocation: '/tender-scrutiny'));
       await tester.pumpAndSettle();
 
       // Run compliance check on default preset (Preset 2: Transformer)

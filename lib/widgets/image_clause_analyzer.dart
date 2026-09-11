@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
@@ -16,7 +16,7 @@ import 'secondary_button.dart';
 import 'evidence_sheet.dart';
 
 /// Phase 4 Image Clause Analyzer component.
-/// Provides real local image selection, previewing, and deterministic offline
+/// Provides real local image selection via camera/gallery, previewing, and deterministic offline
 /// statutory audit analysis for tender clause images.
 class ImageClauseAnalyzer extends StatefulWidget {
   const ImageClauseAnalyzer({super.key});
@@ -26,6 +26,8 @@ class ImageClauseAnalyzer extends StatefulWidget {
 }
 
 class _ImageClauseAnalyzerState extends State<ImageClauseAnalyzer> {
+  final ImagePicker _picker = ImagePicker();
+
   // Selected Image State
   String? _imagePath;
   Uint8List? _imageBytes;
@@ -58,27 +60,16 @@ class _ImageClauseAnalyzerState extends State<ImageClauseAnalyzer> {
     });
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImageFromSource(ImageSource source) async {
     try {
-      final files = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png'],
-      );
-
-      if (files.isNotEmpty) {
-        final file = files.first;
-        Uint8List? bytes;
-        try {
-          bytes = await file.readAsBytes();
-        } catch (_) {}
-        int size = 0;
-        try {
-          size = file.lengthSync() ?? await file.length();
-        } catch (_) {}
+      final xFile = await _picker.pickImage(source: source);
+      if (xFile != null) {
+        final bytes = await xFile.readAsBytes();
+        final size = await xFile.length();
         setState(() {
-          _imagePath = file.path;
+          _imagePath = xFile.path;
           _imageBytes = bytes;
-          _imageFileName = file.name;
+          _imageFileName = xFile.name;
           _imageFileSize = size;
           _isAssetSample = false;
           _hasAnalyzed = false;
@@ -90,12 +81,57 @@ class _ImageClauseAnalyzerState extends State<ImageClauseAnalyzer> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not open file picker: $e'),
+            content: Text('Image acquisition error: $e'),
             duration: const Duration(seconds: 2),
           ),
         );
       }
     }
+  }
+
+  Future<void> _pickImage() async {
+    _showSourcePickerSheet();
+  }
+
+  void _showSourcePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('SELECT CLAUSE IMAGE SOURCE', style: AppTextStyles.sectionEyebrow),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+                title: const Text('Take Photo with Camera', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Capture clear photo of technical specification', style: TextStyle(fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImageFromSource(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+                title: const Text('Choose from Gallery / Device Storage', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Select existing JPG or PNG image file', style: TextStyle(fontSize: 11)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImageFromSource(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _selectSampleClauseImage() {
@@ -279,10 +315,40 @@ class _ImageClauseAnalyzerState extends State<ImageClauseAnalyzer> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 14),
-                ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.folder_open, size: 16),
-                  label: const Text('CHOOSE AN IMAGE'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onPressed: () => _pickImageFromSource(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined, size: 16),
+                        label: const Text(
+                          'TAKE PHOTO',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                        onPressed: () => _pickImageFromSource(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined, size: 16),
+                        label: const Text(
+                          'CHOOSE AN IMAGE',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
