@@ -46,17 +46,13 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.verified,
-                            color: AppColors.secondaryContainer,
-                            size: 16,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.asset(
+                            'assets/branding/manaksetu_app_icon.png',
+                            width: 28,
+                            height: 28,
+                            fit: BoxFit.cover,
                           ),
                         ),
                         const SizedBox(width: 8),

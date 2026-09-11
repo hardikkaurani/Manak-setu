@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
 import 'widgets/app_shell.dart';
 import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/tender_scrutiny_screen.dart';
 import 'screens/specification_builder_screen.dart';
 import 'screens/standards_explorer_screen.dart';
@@ -15,11 +16,15 @@ import 'screens/more_screen.dart';
 class ManakSetuApp extends StatelessWidget {
   final String initialLocation;
 
-  const ManakSetuApp({super.key, this.initialLocation = '/home'});
+  const ManakSetuApp({super.key, this.initialLocation = '/splash'});
 
-  static GoRouter createRouter({String initialLocation = '/home'}) => GoRouter(
+  static GoRouter createRouter({String initialLocation = '/splash'}) => GoRouter(
         initialLocation: initialLocation,
         routes: [
+          GoRoute(
+            path: '/splash',
+            builder: (context, state) => const SplashScreen(),
+          ),
           ShellRoute(
             builder: (context, state, child) {
               return AppShell(location: state.matchedLocation, child: child);
