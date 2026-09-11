@@ -1,0 +1,893 @@
+Flutter implementation plan — ManakSetu mobile demo
+1. Objective
+
+Build a fully hardcoded Flutter mobile prototype of ManakSetu for SIH demonstration purposes.
+
+Nothing needs to contact the Python backend, Supabase, Gemini, APIs, or external databases.
+
+The application must look and behave like a working standards-intelligence product, but every result can be represented by local Dart models and deterministic demo state.
+
+The goal is:
+
+Page 1
+Tender / Requirement Scrutiny
+        ↓
+User enters requirement
+        ↓
+Hardcoded analysis result
+        ↓
+Standards + compliance findings + evidence
+        ↓
+Optional image upload → Text Clause Analyzer UI
+
+Page 2
+Specification Builder
+        ↓
+Selected standard
+        ↓
+Build technical procurement specification
+        ↓
+Clause-by-clause evidence
+        ↓
+Open exact BIS document/page
+
+Do not attempt to reproduce the entire web PRD. The original product specification contains significantly broader functionality—multi-modal ingestion, hybrid retrieval, knowledge graph, regulatory guardrails, anti-tailoring, foreign-standard normalization, exports, etc.
+
+For this phase, those are out of scope.
+
+2. Technology
+
+Use:
+
+Flutter
+Dart
+Material 3
+go_router
+file_picker
+
+No backend dependency.
+
+No Firebase.
+
+No Supabase.
+
+No REST API.
+
+No authentication.
+
+No database.
+
+No state-management framework unless genuinely necessary.
+
+For a two-page demo, keep state local using ordinary Flutter state / controllers.
+
+3. Existing web design is the visual reference
+
+The attached screenshots are the primary visual reference.
+
+Do not invent a completely different mobile design.
+
+Translate the visual language rather than literally shrinking the desktop UI.
+
+The existing design contains:
+
+ManakSetu branding
+restrained enterprise/government aesthetic
+navy/white interface
+dense information hierarchy
+left navigation on desktop
+procurement-oriented terminology
+verification states
+evidence-driven cards
+
+The mobile version should feel like the same product, not a generic Flutter app.
+
+Avoid:
+
+excessive gradients
+giant rounded consumer-app cards
+playful illustrations
+unnecessary animations
+exaggerated AI branding
+chatbot-style UI
+
+This is a government procurement/standards tool.
+
+4. Application structure
+
+Use this structure:
+
+lib/
+├── main.dart
+├── app.dart
+│
+├── models/
+│   ├── tender_analysis.dart
+│   ├── standard.dart
+│   ├── evidence.dart
+│   ├── specification.dart
+│   └── clause_finding.dart
+│
+├── data/
+│   └── demo_data.dart
+│
+├── screens/
+│   ├── tender_scrutiny_screen.dart
+│   └── specification_builder_screen.dart
+│
+├── widgets/
+│   ├── app_header.dart
+│   ├── status_badge.dart
+│   ├── standard_card.dart
+│   ├── evidence_card.dart
+│   ├── compliance_card.dart
+│   ├── specification_section.dart
+│   ├── clause_editor.dart
+│   └── pdf_reference_button.dart
+│
+└── theme/
+    └── app_theme.dart
+
+Keep the architecture intentionally simple.
+
+5. Hardcoded data architecture
+
+Do not scatter strings throughout widget code.
+
+Create proper Dart models.
+
+For example:
+
+class Standard {
+  final String number;
+  final String title;
+  final String status;
+  final String reason;
+  final List<Evidence> evidence;
+}
+
+and:
+
+class Evidence {
+  final String sourceFile;
+  final int page;
+  final String? clause;
+  final String text;
+}
+
+Then place all demonstration content inside:
+
+data/demo_data.dart
+
+The UI should render the data.
+
+This is important because later you can replace:
+
+DemoRepository
+
+with:
+
+ApiRepository
+
+without redesigning the UI.
+
+6. PAGE 1 — Tender Scrutiny
+
+This is the mobile equivalent of the first group of screenshots.
+
+Route:
+
+/tender-scrutiny
+Header
+
+Show:
+
+ManakSetu
+STANDARDS INTELLIGENCE
+
+with:
+
+Tender Scrutiny
+
+below/alongside it.
+
+On mobile, don't reproduce the giant desktop sidebar.
+
+Use a compact top bar with:
+
+☰   ManakSetu                    ⋮
+
+and a small page title beneath.
+
+7. Tender input area
+
+The first major card should be:
+
+NEW STANDARDS SCRUTINY & ANALYSIS
+
+Subtitle:
+
+Audit tender specifications against Indian Standards,
+mandatory quality requirements, and procurement safeguards.
+
+Then:
+
+Procurement Item
+[ Distribution Transformers              ]
+
+Department / Procuring Entity
+[ Municipal Water Supply Directorate     ]
+
+Technical Specification / Tender Clause
+┌──────────────────────────────────────┐
+│                                      │
+│  Enter or paste tender specification │
+│                                      │
+└──────────────────────────────────────┘
+
+Primary CTA:
+
+CHECK TENDER COMPLIANCE
+8. Image upload feature
+
+This is the only additional feature requested for page 1.
+
+Add:
+
+Upload Image
+
+next to or directly under the text field.
+
+Use file_picker or an equivalent Flutter package.
+
+Important:
+
+The image does not need to actually be OCR processed.
+
+The demo interaction should be:
+
+Upload Image
+      ↓
+image preview
+      ↓
+"Analyze Clause"
+      ↓
+hardcoded extracted clause
+      ↓
+analysis result
+
+Example:
+
+Uploaded Tender Clause
+
+[IMAGE PREVIEW]
+
+Extracted Clause
+"Transformer design, manufacture and testing shall
+conform strictly to IS 1180:1989."
+
+Detected References
+IS 1180:1989
+IS 335:1993
+
+Then transition to the same hardcoded analysis result.
+
+The upload itself must work because judges may tap it.
+
+The OCR/model result does not need to actually work.
+
+9. Preset demo scenarios
+
+The easiest way to guarantee a good demo is to provide preset cards.
+
+Use three.
+
+Preset 1
+Water Supply HDPE Pipeline
+
+Input:
+
+Procurement of HDPE pipes for potable water distribution,
+500 mm OD, PE100, PN10.
+Preset 2
+Distribution Transformer
+
+This is based directly on the visual reference screenshots.
+
+Preset 3
+Tender Clause Image Analysis
+
+Loads the image-analysis result state.
+
+This gives you three demo paths without requiring real inference.
+
+10. Analysis result screen/state
+
+After pressing:
+
+CHECK TENDER COMPLIANCE
+
+show a hardcoded result.
+
+At the top:
+
+COMPLIANCE EVALUATION
+
+95%
+COMPLIANT
+
+Do not pretend this number is calculated.
+
+It is simply demo data.
+
+Below it:
+
+Detected Standards & Regulatory Status
+
+Example card:
+
+IS 4984:2016
+Polyethylene Pipes for Water Supply
+
+ACTIVE
+RELEVANT
+
+[Open Evidence]
+
+Then:
+
+Related Standards
+
+and:
+
+Regulatory Findings
+11. Compliance result cards
+
+Use the same visual language as the screenshots:
+
+Verified
+
+Green:
+
+✓ VERIFIED
+Warning
+
+Amber:
+
+⚠ REVIEW REQUIRED
+Non-compliant
+
+Red:
+
+✕ NON-COMPLIANT
+
+Each finding should have:
+
+Finding
+Why it matters
+Recommended action
+Evidence
+
+Example:
+
+OBSOLETE STANDARD REFERENCE
+
+IS 1180:1989
+
+This standard has been superseded.
+
+Replace with:
+IS 1180 (Part 1):2014
+
+[VIEW SOURCE]
+12. Critical requirement
+
+Every standards-related finding should have a visible:
+
+View Source
+
+or:
+
+View BIS Evidence
+
+button.
+
+It should open a dedicated evidence view.
+
+This is central to the product's value proposition: the SIH material explicitly emphasizes source-backed recommendations and exact references rather than unsupported AI answers.
+
+13. BIS evidence view
+
+Do NOT attempt to build an actual PDF rendering engine inside this first mobile phase.
+
+Instead build an evidence screen that visually behaves like a document viewer.
+
+Example:
+
+BIS EVIDENCE
+
+IS 4984:2016
+
+Clause 7.4.1.1
+Page 7
+
+────────────────────
+
+Nominal diameters shall be
+16 mm to 1000 mm...
+
+────────────────────
+
+SOURCE
+
+4984_2016_amd1_reff2021.pdf
+
+[OPEN DOCUMENT]
+
+If you have an actual bundled PDF asset, Open Document can open it.
+
+Otherwise use a polished simulated document viewer for the demo.
+
+Do not falsely claim that an absent document is being fetched from BIS.
+
+14. "Build Specification" CTA
+
+This is the bridge between Page 1 and Page 2.
+
+On an applicable/selected standard:
+
+BUILD SPECIFICATION →
+
+This must navigate to:
+
+/specification-builder
+
+Pass the selected demo scenario through local state.
+
+15. PAGE 2 — Specification Builder
+
+This is the second major screen from your reference images.
+
+Title:
+
+SPECIFICATION BUILDER
+
+Subtitle:
+
+Bid-ready technical specification
+
+Then:
+
+PRIMARY STANDARD
+IS 4984:2016
+
+and:
+
+Polyethylene Pipes for Water Supply
+16. Compliance summary
+
+At the top:
+
+100%
+COMPLIANT
+
+All currently specified parameters
+are supported by the selected standard.
+
+Then:
+
+RE-CHECK COMPLIANCE
+
+The button can simply update a timestamp or replay a tiny loading animation before returning to the same state.
+
+17. Clause-by-clause workbench
+
+Use a horizontal tab system or vertically stacked navigation because this is mobile.
+
+Sections:
+
+1. Product Scope
+2. Applicable Indian Standard
+3. Technical Requirements
+4. Quality & Testing
+5. Marking & Documentation
+6. Delivery & Purchaser Conditions
+
+This mirrors the structure already established in your specification-builder design. The planned builder separates BIS-derived clauses from purchaser-defined clauses and explicitly avoids fabricating unsupported requirements.
+
+18. Technical Requirements section
+
+This is the most important section.
+
+Render:
+
+Material
+PE100
+✓ VERIFIED
+
+Nominal Diameter
+500 mm
+✓ VERIFIED
+
+Pressure Rating
+PN10
+✓ VERIFIED
+
+SDR
+11
+✓ VERIFIED
+
+Each row should contain:
+
+Parameter
+Requested Value
+Verification Status
+Standard Rule
+Source
+
+Example:
+
+PRESSURE RATING
+
+Requested
+PN10
+
+Standard Requirement
+PN10
+
+✓ VERIFIED
+
+IS 4984:2016
+Table 4 · Page 8
+
+[VIEW SOURCE]
+19. Editable specification
+
+The screenshots show a workbench.
+
+Implement a small editor.
+
+Each editable clause:
+
+Nominal Diameter
+
+[ 500 mm ]
+
+✓ VERIFIED
+
+[RE-CHECK]
+
+When the user edits:
+
+500 mm
+
+to:
+
+1500 mm
+
+show:
+
+✕ CONFLICT
+
+Requested value is outside
+the permitted standard range.
+
+[VIEW SOURCE]
+
+Again, this can be completely hardcoded behavior.
+
+Example:
+
+if (value == "1500 mm") {
+   state = Conflict;
+}
+
+This is acceptable because this is a demonstration prototype.
+
+But keep that logic isolated inside the demo repository/controller rather than embedding it throughout the widgets.
+
+20. BIS evidence button
+
+Every technical parameter should have:
+
+View in BIS
+
+When pressed:
+
+BIS Evidence
+      ↓
+Source document
+      ↓
+Clause
+      ↓
+Page
+
+This is one of the strongest visual features of your prototype.
+
+The underlying conceptual architecture is consistent with the SIH submission: the evidence layer is specifically described as providing the exact source, page, and clause.
+
+21. Purchaser-defined clauses
+
+Add:
+
++ Add Purchaser Requirement
+
+Dialog:
+
+Parameter
+[ Pipe colour ]
+
+Requirement
+[ Blue ]
+
+[ ADD ]
+
+Result:
+
+PURCHASER-DEFINED
+
+Pipe Colour
+Blue
+
+No BIS evidence
+
+This distinction is important. It prevents the demo from implying that every clause is mandated by BIS.
+
+The web specification explicitly establishes this distinction between BIS-derived and purchaser-defined requirements.
+
+22. Specification output
+
+At the bottom:
+
+COPY SPECIFICATION
+
+and:
+
+DOWNLOAD SPECIFICATION
+
+For the mobile demo, the first can simply copy a generated string to the clipboard.
+
+The second can generate a local text file or show:
+
+Specification ready for export
+
+There is no need to implement a sophisticated DOCX generator for this Flutter phase.
+
+23. Hardcoded demonstration flow
+
+Your primary judge flow should be:
+
+OPEN APP
+   ↓
+Tender Scrutiny
+   ↓
+Tap "Water Supply HDPE Pipeline"
+   ↓
+Analysis appears
+   ↓
+Detected standard
+   ↓
+View BIS evidence
+   ↓
+Build Specification
+   ↓
+Specification Builder
+   ↓
+PE100
+500 mm
+PN10
+SDR11
+   ↓
+Tap "View BIS"
+   ↓
+Evidence screen
+   ↓
+Edit PN10 → PN16
+   ↓
+RE-CHECK
+   ↓
+CONFLICT
+   ↓
+View BIS Evidence
+
+That is enough to communicate the system.
+
+24. Second judge flow
+
+Your second flow:
+
+Tender Scrutiny
+      ↓
+Upload Image
+      ↓
+Image preview
+      ↓
+Analyze Clause
+      ↓
+Detected tender clause
+      ↓
+Standards identified
+      ↓
+Compliance findings
+
+Again: the upload interaction is real; the analysis output is deterministic demo data.
+
+25. Demo data should be centralized
+
+Create something like:
+
+class DemoData {
+  static final hdpeTender = ...
+  static final transformerTender = ...
+  static final imageAnalysis = ...
+  static final hdpeSpecification = ...
+}
+
+Do not write:
+
+if (screen == ...)
+
+all over the UI.
+
+Use:
+
+DemoScenario
+    ↓
+DemoTender
+    ↓
+DemoAnalysis
+    ↓
+DemoSpecification
+
+That will make the app dramatically easier to modify during the hackathon.
+
+26. Routing
+
+Use only two primary routes:
+
+/tender-scrutiny
+/specification-builder
+
+Optional:
+
+/evidence
+
+The evidence view can be a modal/bottom sheet rather than another page.
+
+27. Responsive/mobile requirements
+
+The screenshots are desktop interfaces, so do not copy the desktop sidebar.
+
+Use:
+
+AppBar
+↓
+Content
+↓
+Bottom navigation/action area
+
+The UI must work on approximately:
+
+360 × 800
+390 × 844
+430 × 932
+
+Use SafeArea, flexible layouts, and scrollable content.
+
+Never hardcode pixel widths that only work on one phone.
+
+28. Animation
+
+Keep animation minimal.
+
+Use:
+
+button loading state
+page transition
+evidence expansion
+verification state transition
+
+Do not add elaborate motion.
+
+This is an enterprise tool.
+
+29. Testing
+
+Do not waste time building a massive test suite.
+
+Minimum:
+
+flutter analyze
+flutter test
+flutter build apk --debug
+
+Add widget tests for:
+
+1. Tender screen loads
+2. Preset populates requirement
+3. Analyze displays result
+4. Build Specification navigates
+5. Specification edits update verification state
+6. Image picker interaction can be triggered
+
+The original SIH guidance explicitly emphasizes a working prototype/workflow and concise, understandable presentation rather than an enormous production system.
+
+30. Explicit non-goals
+
+The agent must not implement:
+
+❌ Gemini API
+❌ Supabase
+❌ Python backend integration
+❌ authentication
+❌ Firebase
+❌ real OCR
+❌ real RAG
+❌ vector database
+❌ knowledge graph
+❌ live BIS API
+❌ user accounts
+❌ cloud persistence
+❌ real tender document generation
+❌ full DOCX engine
+❌ production PDF annotation
+❌ complex state management
+
+Your existing web repository already contains considerably more functionality than this mobile demo needs.
+
+31. Critical implementation rule
+
+Do not delete, modify, or depend on the existing web application.
+
+Create the Flutter application independently.
+
+The mobile demo should be able to run even if:
+
+Python is not installed
+backend is offline
+Supabase is offline
+Gemini quota is exhausted
+internet is unavailable
+
+That is exactly what you want for a hackathon demo.
+
+32. Definition of done
+
+The implementation is complete when:
+
+[✓] Flutter project runs
+[✓] ManakSetu branding appears
+[✓] Tender Scrutiny page matches reference aesthetic
+[✓] Three demo scenarios work
+[✓] Text tender analysis displays
+[✓] Image can be selected
+[✓] Image preview displays
+[✓] Hardcoded clause analysis displays
+[✓] Standards cards display
+[✓] Compliance findings display
+[✓] Evidence can be opened
+[✓] Specification Builder opens
+[✓] Six specification sections display
+[✓] Technical parameters display
+[✓] Parameters can be edited
+[✓] Re-check changes status
+[✓] Conflict state displays
+[✓] Purchaser-defined clause can be added
+[✓] Evidence can be viewed
+[✓] App works offline
+[✓] flutter analyze passes
+[✓] flutter test passes
+[✓] APK builds
+Architecture verdict
+
+This is the right level for what you're doing now.
+
+Your actual SIH concept is bigger—the submitted material describes a platform that turns “Search → Read → Compare → Verify” into “Describe → Get the right standards → See the evidence.”
+
+The mobile app does not need to implement that entire backend to communicate the concept. It needs to make the interaction believable, visually polished, and internally consistent.
+
+The most important thing is that the judge can perform this in under two minutes:
+
+enter tender → see standards → inspect evidence → build specification → change a parameter → see conflict.
+
+That is the demo. Everything else is noise.
