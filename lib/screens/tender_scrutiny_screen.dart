@@ -757,6 +757,13 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
             // Input Option 3: Add Product Image
             ProductImageInputCard(
               onAnalyzeProduct: _onProductImageAnalyzed,
+              onModeToggled: (isErrorMode) {
+                if (_hasAnalyzed) {
+                  setState(() {
+                    _hasAnalyzed = false;
+                  });
+                }
+              },
               onManualInputRequested: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -831,8 +838,8 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
             // Document Upload Ingestion Tab
             _buildDocumentUploadTab(),
           ] else if (_activeTabIndex == 2) ...[
-            // Phase 4 Clause Image Analyzer
-            const ImageClauseAnalyzer(),
+            // Phase 5B Multi-Modal Visual Gap Matrix & Physical Scrutiny
+            ImageClauseAnalyzer(currentPresetId: _currentPresetId),
           ],
         ],
       ),

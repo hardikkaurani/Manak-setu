@@ -8,9 +8,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../models/knowledge_state.dart';
 import '../models/product_image_sample.dart';
+import '../models/demo_image_analysis.dart';
 import '../data/demo_data.dart';
 import 'section_card.dart';
 import 'knowledge_state_badge.dart';
+import 'status_badge.dart';
 import 'primary_button.dart';
 
 /// Product Image Input & Analysis Card for Tender Scrutiny.
@@ -19,11 +21,13 @@ import 'primary_button.dart';
 class ProductImageInputCard extends StatefulWidget {
   final void Function(ProductImageSample sample) onAnalyzeProduct;
   final VoidCallback onManualInputRequested;
+  final void Function(bool isErrorMode)? onModeToggled;
 
   const ProductImageInputCard({
     super.key,
     required this.onAnalyzeProduct,
     required this.onManualInputRequested,
+    this.onModeToggled,
   });
 
   @override
@@ -42,10 +46,59 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
   // Selected or detected demo product sample
   late ProductImageSample _selectedSample;
 
+  // Phase 5B Demo Error-State Override
+  bool _forceImageMismatch = false;
+  DemoImageAnalysis? _mismatchResult;
+  bool _isAnalyzing = false;
+
   @override
   void initState() {
     super.initState();
     _selectedSample = DemoData.productImageSamples.first; // Default: Transformer
+  }
+
+  void _toggleErrorOverride() {
+    setState(() {
+      _forceImageMismatch = !_forceImageMismatch;
+      _mismatchResult = null; // Clear stale result immediately
+      _isAnalyzing = false;
+    });
+    widget.onModeToggled?.call(_forceImageMismatch);
+  }
+
+  String _getGoverningStandard(ProductImageSample sample) {
+    switch (sample.id) {
+      case 'pipe':
+        return 'IS 4984:2016';
+      case 'steel':
+        return 'IS 1786:2008';
+      case 'transformer':
+      default:
+        return 'IS 1180:2014';
+    }
+  }
+
+  Future<void> _handleAnalyze() async {
+    if (_forceImageMismatch) {
+      setState(() {
+        _isAnalyzing = true;
+        _mismatchResult = null;
+      });
+      await Future.delayed(const Duration(milliseconds: 250));
+      if (!mounted) return;
+      final std = _getGoverningStandard(_selectedSample);
+      setState(() {
+        _isAnalyzing = false;
+        _mismatchResult = DemoImageAnalysis.evaluate(
+          _imageFileName ?? '${_selectedSample.id}_photo.jpg',
+          tenderStandard: std,
+          contextText: _selectedSample.title,
+          forceMismatch: true,
+        );
+      });
+    } else {
+      widget.onAnalyzeProduct(_selectedSample);
+    }
   }
 
   void _clearImage() {
@@ -55,6 +108,8 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
       _imageFileName = null;
       _imageFileSize = null;
       _isAssetSample = false;
+      _mismatchResult = null;
+      _isAnalyzing = false;
     });
   }
 
@@ -75,6 +130,8 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
           _imageFileName = xFile.name;
           _imageFileSize = size;
           _isAssetSample = false;
+          _mismatchResult = null;
+          _isAnalyzing = false;
         });
       }
     } catch (e) {
@@ -98,6 +155,8 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
       _isAssetSample = true;
       _imageBytes = null;
       _imagePath = sample.sampleAssetPath;
+      _mismatchResult = null;
+      _isAnalyzing = false;
     });
   }
 
@@ -275,7 +334,9 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
             children: [
               Text('Quick demo products:', style: AppTextStyles.caption.copyWith(fontSize: 10)),
               ...DemoData.productImageSamples.take(3).map((sample) {
+                final label = sample.category.split(' ').first;
                 return InkWell(
+                  key: Key('quick_demo_${sample.id}'),
                   onTap: () => _selectDemoSample(sample),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -286,11 +347,13 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
                     ),
                     child: Text(
                       sample.category.split(' ').first,
+                      label,
                       style: const TextStyle(fontSize: 10, color: AppColors.primary),
                     ),
                   ),
                 );
               }),
+              _buildDemoErrorSwitch(),
             ],
           ),
         ],
@@ -424,6 +487,46 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
           ),
           const SizedBox(height: 14),
 
+          const SizedBox(height: 10),
+
+          // Quick Demo Products strip with Error Override Switch
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text('Quick demo products:', style: AppTextStyles.caption.copyWith(fontSize: 10)),
+              ...DemoData.productImageSamples.take(3).map((sample) {
+                final label = sample.category.split(' ').first;
+                final isSelected = _selectedSample.id == sample.id;
+                return InkWell(
+                  key: Key('quick_demo_${sample.id}'),
+                  onTap: () => _selectDemoSample(sample),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primary : AppColors.surface,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isSelected ? AppColors.primary : AppColors.outlineVariant,
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                        color: isSelected ? AppColors.onPrimary : AppColors.primary,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              _buildDemoErrorSwitch(),
+            ],
+          ),
+          const SizedBox(height: 14),
+
           // 3. Demo Product Category Switcher
           Text('MATCHED PRODUCT CATEGORY (DEMO SELECTION)', style: AppTextStyles.sectionEyebrow),
           const SizedBox(height: 6),
@@ -454,6 +557,8 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
                       if (selected) {
                         setState(() {
                           _selectedSample = sample;
+                          _mismatchResult = null;
+                          _isAnalyzing = false;
                         });
                       }
                     },
@@ -466,6 +571,18 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
 
           // 4. Extracted Summary or Fallback Card
           if (_selectedSample.isSupported) ...[
+          // 4. Extracted Summary or Fallback Card or Mismatch Card
+          if (_mismatchResult != null) ...[
+            _buildMismatchResultCard(_mismatchResult!),
+            const SizedBox(height: 14),
+            PrimaryButton(
+              key: const Key('analyze_product_button'),
+              label: 'ANALYZE APPLICABLE STANDARDS',
+              icon: Icons.shield_outlined,
+              isLoading: _isAnalyzing,
+              onPressed: _handleAnalyze,
+            ),
+          ] else if (_selectedSample.isSupported) ...[
             _buildSupportedParametersView(),
             const SizedBox(height: 14),
             PrimaryButton(
@@ -473,6 +590,8 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
               label: 'ANALYZE APPLICABLE STANDARDS',
               icon: Icons.shield_outlined,
               onPressed: () => widget.onAnalyzeProduct(_selectedSample),
+              isLoading: _isAnalyzing,
+              onPressed: _handleAnalyze,
             ),
           ] else ...[
             _buildUnsupportedFallbackView(),
@@ -523,6 +642,11 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
             children: [
               Text('EXTRACTED PRODUCT SPECIFICATION', style: AppTextStyles.sectionEyebrow),
               KnowledgeStateBadge(
@@ -635,6 +759,327 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
               value,
               style: AppTextStyles.body.copyWith(fontSize: 11),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDemoErrorSwitch() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: _forceImageMismatch
+            ? AppColors.nonCompliantBg
+            : AppColors.surface,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: _forceImageMismatch
+              ? AppColors.nonCompliantBorder
+              : AppColors.outlineVariant,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _forceImageMismatch ? Icons.error_outline : Icons.bug_report_outlined,
+            size: 11,
+            color: _forceImageMismatch
+                ? AppColors.nonCompliantText
+                : AppColors.textSecondary,
+          ),
+          const SizedBox(width: 4),
+          InkWell(
+            onTap: _toggleErrorOverride,
+            child: Text(
+              'Force Mismatch',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: _forceImageMismatch ? FontWeight.w700 : FontWeight.w500,
+                color: _forceImageMismatch
+                    ? AppColors.nonCompliantText
+                    : AppColors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 2),
+          SizedBox(
+            height: 16,
+            width: 28,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: Switch(
+                key: const Key('demo_error_override_switch'),
+                value: _forceImageMismatch,
+                activeThumbColor: AppColors.nonCompliantText,
+                activeTrackColor: AppColors.nonCompliantBg,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (val) {
+                  if (val != _forceImageMismatch) {
+                    _toggleErrorOverride();
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMismatchResultCard(DemoImageAnalysis result) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.nonCompliantBorder,
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Section Eyebrow Header
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'MULTI-MODAL VISUAL GAP MATRIX & PHYSICAL SCRUTINY',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  fontSize: 10,
+                ),
+              ),
+              StatusBadge.nonCompliant('SCRUTINY REJECTED'),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Prominent Red Alert Card
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.nonCompliantBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.nonCompliantBorder,
+                width: 1.5,
+              ),
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.cancel_outlined,
+                      color: AppColors.nonCompliantText,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'PRODUCT MISMATCH ALERT:',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.nonCompliantText,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.6,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'IMAGE INVALID FOR SPECIFIED REQUIREMENT',
+                            style: AppTextStyles.cardTitle.copyWith(
+                              color: AppColors.nonCompliantText,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Governing Standard
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.nonCompliantBorder),
+                  ),
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 2,
+                    children: [
+                      Text(
+                        'Governing Standard: ',
+                        style: AppTextStyles.caption.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        result.governingStandard,
+                        style: AppTextStyles.codeBadge.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Product Mismatch Detected section
+                Text(
+                  'PRODUCT MISMATCH DETECTED:',
+                  style: AppTextStyles.caption.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: AppColors.nonCompliantText,
+                    fontSize: 10.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  result.resultDescription,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary,
+                    fontSize: 11.5,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Nested Category Conflict Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB), // Amber-50
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFFFCD34D), // Amber-300
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            size: 16,
+                            color: Color(0xFFB45309),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'CATEGORY CONFLICT:',
+                              style: AppTextStyles.caption.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFB45309),
+                                fontSize: 10.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        result.categoryConflict ??
+                            'Equipment photo/nameplate does not correspond to the required procurement category. Scrutiny rejected.',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: const Color(0xFF92400E),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Recovery Actions
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('change_image_button'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  ),
+                  onPressed: _showImageSourcePicker,
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.refresh, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'CHANGE IMAGE',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('clear_image_button'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.nonCompliantText,
+                    side: const BorderSide(color: AppColors.outlineVariant),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  ),
+                  onPressed: _clearImage,
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.delete_outline, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'CLEAR',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
