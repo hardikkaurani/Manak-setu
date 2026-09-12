@@ -186,7 +186,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright [yyyy] [name of copyright owner]
+   Copyright 2026 ManakSetu Project Contributors
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -199,3 +199,13 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+---
+
+### Third-Party Standards & Regulatory Material Notice
+
+This software provides reference citations, metadata, and gazette extracts relating to Indian Standards (IS), Quality Control Orders (QCOs), General Financial Rules (GFR), and Central Vigilance Commission (CVC) public procurement guidelines.
+
+- Indian Standards specifications, standardization marks, and related statutory publications remain the exclusive property of the Bureau of Indian Standards (BIS) and the respective Government of India Ministries/Departments under the Bureau of Indian Standards Act, 2016.
+- The inclusion of standards numbers, titles, and statutory cross-references in this software is strictly for non-commercial research, compliance analysis, and educational demonstration purposes under fair use.
+- Users are advised to consult official gazette notifications and authoritative BIS publications at https://www.services.bis.gov.in for commercial procurement and legal statutory enforcement.
