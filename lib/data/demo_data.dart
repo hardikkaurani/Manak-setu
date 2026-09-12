@@ -14,6 +14,7 @@ import '../models/knowledge_state.dart';
 import '../models/decision_trace.dart';
 import '../models/why_this_standard.dart';
 import '../models/amendment_diff.dart';
+import '../models/product_image_sample.dart';
 
 /// Single source of truth for all canonical mock data in the ManakSetu demo.
 /// Strictly transcribed from `manaksetu_mock_data.md` and repo reference data
@@ -3570,6 +3571,109 @@ abstract final class DemoData {
       hasClauseDiffData: false,
       diffNotice:
           'Detailed amendment diff unavailable in current dataset. Consult standard detail for verified lifecycle relationships.',
+    );
+  }
+
+  // ==========================================
+  // PRODUCT IMAGE ANALYSIS SAMPLES (OFFLINE DEMO)
+  // ==========================================
+  static const List<ProductImageSample> productImageSamples = [
+    ProductImageSample(
+      id: 'transformer',
+      title: 'Distribution Transformer (Oil-Immersed 250 kVA)',
+      category: 'Distribution Transformers',
+      department: 'Municipal Water Supply Directorate',
+      detectedAttributes:
+          'Outdoor oil-immersed tank, HV/LV porcelain bushings, corrugated cooling fins, rating plate legible, BIS standard mark inspected',
+      material:
+          'Electrolytic grade Copper winding, cold-rolled grain-oriented (CRGO) steel core laminations, mineral insulating oil',
+      sizeRating: '250 kVA, 11 kV / 433 V, 50 Hz, 3-Phase',
+      application:
+          'Substation step-down distribution (11kV to 433V) for auxiliary pumping station',
+      performance:
+          'Total losses at 50% & 100% load complying with BEE Star / IS 1180 Part 1 Level 2',
+      knowledgeState: KnowledgeState.verified,
+      technicalClause: '''TECHNICAL SPECIFICATIONS FOR SUBSTATION DISTRIBUTION TRANSFORMERS:
+1. Supply of 250 kVA, 11 kV / 433 V, 3-Phase 50 Hz outdoor oil-immersed distribution transformer.
+2. Transformer design, manufacture and testing shall conform strictly to IS 1180:1989.
+3. Proprietary OEM components: only ABB or Siemens high-voltage bushings permitted.
+4. Testing of transformer insulating oil as per obsolete IS 335:1993.
+5. Compliance with Electrical Transformers (Quality Control) Order is left to bidder declaration.''',
+      presetId: 'transformer',
+      isSupported: true,
+      sampleAssetPath: 'assets/branding/manaksetu_app_icon.png',
+    ),
+    ProductImageSample(
+      id: 'pipe',
+      title: 'HDPE Water Supply Pipe (PE-100 PN-10)',
+      category: 'HDPE Water Supply Pipes',
+      department: 'Municipal Water Supply Directorate',
+      detectedAttributes:
+          'Extruded cylindrical thermoplastic conduit, coextruded blue identification stripes, continuous 110mm OD, PE-100 resin label, batch traceability stamp',
+      material: 'High-Density Polyethylene (PE-100 virgin compound)',
+      sizeRating: '110 mm Nominal Outer Diameter, PN-10 rating, SDR 13.6',
+      application:
+          'Municipal potable water distribution network & pressurized transmission mains',
+      performance:
+          'Hydrostatic strength resistance >= 12.4 MPa at 20°C for 100 hours; carbon black dispersion >= 2.0%',
+      knowledgeState: KnowledgeState.verified,
+      technicalClause: '''TECHNICAL SPECIFICATIONS FOR HDPE PIPELINE AUGMENTATION:
+1. Pipes shall strictly conform to IS 4984:1995 (Fourth Revision) or ASTM D3035.
+2. Only Supreme or Astral make pipes shall be accepted by the Engineer-in-Charge.
+3. Pipe raw material grade shall be PE-80, pressure rating PN 10, SDR 11.
+4. BIS ISI Mark under Pipes QCO 2020 is optional for imported consignments.
+5. Minimum annual average financial turnover of bidder must be Rs 650 Crores.''',
+      presetId: 'pipe',
+      isSupported: true,
+      sampleAssetPath: 'assets/branding/manaksetu_app_icon.png',
+    ),
+    ProductImageSample(
+      id: 'steel',
+      title: 'High-Strength TMT Steel Rebars (Fe 500D)',
+      category: 'TMT Reinforcement Steel',
+      department: 'Central Public Works Department (CPWD)',
+      detectedAttributes:
+          'Hot-rolled transverse deformed ribs, continuous longitudinal ribs, 16mm nominal bar thickness, mill stamp imprint with Fe 500D designation',
+      material: 'Thermo-Mechanically Treated High-Yield Strength Carbon Steel',
+      sizeRating: '16 mm nominal diameter, Fe 500D Grade',
+      application:
+          'Seismic Zone IV/V critical reinforced concrete structures and substructure foundations',
+      performance:
+          '0.2% Proof stress >= 500 N/mm², Tensile strength >= 565 N/mm², Minimum elongation >= 16.0%',
+      knowledgeState: KnowledgeState.verified,
+      technicalClause: '''TECHNICAL SPECIFICATIONS FOR CIVIL WORKS REINFORCEMENT STEEL:
+1. Supply of 50 Metric Tonnes Thermo-Mechanically Treated (TMT) bars 16mm diameter.
+2. Reinforcement steel shall strictly be Tata Tiscon or Jindal Panther make only.
+3. Material shall conform to ASTM A615 Grade 60 without domestic Indian Standard equivalence.
+4. Bidders must have sole authorized distributor certificate directly from primary producer.
+5. Steel Quality Control Order (QCO) Scheme-I BIS certification may be submitted post-award.''',
+      presetId: 'steel',
+      isSupported: true,
+      sampleAssetPath: 'assets/branding/manaksetu_app_icon.png',
+    ),
+    ProductImageSample(
+      id: 'unknown',
+      title: 'Unidentified Industrial Assembly',
+      category: 'Unknown Equipment / Custom Sensor Enclosure',
+      department: 'General Engineering Directorate',
+      detectedAttributes:
+          'Unmarked anodized metal housing, no statutory BIS standard mark, proprietary DIN connector pinout, unverified specification tag',
+      material: 'Milled aluminium alloy / Composite cover',
+      sizeRating: 'Non-standard compact enclosure (120 x 80 x 45 mm)',
+      application: 'Specialty industrial telemetry / Unclassified assembly',
+      performance: 'Unverified electrical and mechanical tolerances',
+      knowledgeState: KnowledgeState.outOfCoverage,
+      technicalClause: '',
+      presetId: 'transformer',
+      isSupported: false,
+      sampleAssetPath: null,
+    ),
+  ];
+
+  static ProductImageSample getProductImageSample(String id) {
+    return productImageSamples.firstWhere(
+      (sample) => sample.id == id,
+      orElse: () => productImageSamples.first,
     );
   }
 }

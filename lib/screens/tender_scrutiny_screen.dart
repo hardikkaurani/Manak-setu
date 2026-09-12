@@ -24,6 +24,8 @@ import '../widgets/image_clause_analyzer.dart';
 import '../widgets/boq_audit_card.dart';
 import '../widgets/decision_trace_sheet.dart';
 import '../widgets/why_this_standard_sheet.dart';
+import '../widgets/product_image_input_card.dart';
+import '../models/product_image_sample.dart';
 import '../services/workspace_controller.dart';
 
 /// Phase 2 Interactive Tender Scrutiny Screen.
@@ -162,6 +164,47 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  void _onProductImageAnalyzed(ProductImageSample sample) {
+    if (!sample.isSupported || sample.technicalClause.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Product identification unavailable — manual specification input required.',
+          ),
+          backgroundColor: AppColors.nonCompliantText,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _categoryController.text = sample.category;
+      _departmentController.text = sample.department;
+      _clauseController.text = sample.technicalClause;
+      _activeAnalysisPresetId = sample.presetId;
+      if (sample.presetId == 'pipe') {
+        _selectedPresetIndex = 0;
+      } else if (sample.presetId == 'steel') {
+        _selectedPresetIndex = 2;
+      } else {
+        _selectedPresetIndex = 1;
+      }
+      WorkspaceController().setActivePreset(sample.presetId);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Loaded extracted ${sample.category} specifications from product image.',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    _runComplianceCheck();
   }
 
   Future<void> _runComplianceCheck() async {
@@ -689,6 +732,41 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+
+            // OR Divider
+            Row(
+              children: [
+                const Expanded(child: Divider(color: AppColors.outlineVariant)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'OR',
+                    style: AppTextStyles.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+                const Expanded(child: Divider(color: AppColors.outlineVariant)),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Input Option 3: Add Product Image
+            ProductImageInputCard(
+              onAnalyzeProduct: _onProductImageAnalyzed,
+              onManualInputRequested: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Manual specification mode active. Enter technical parameters in the clause field above.',
+                    ),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 14),
 
