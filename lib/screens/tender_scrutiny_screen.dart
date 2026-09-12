@@ -1139,6 +1139,97 @@ class _TenderScrutinyScreenState extends State<TenderScrutinyScreen> {
                     ),
                   ),
                 ],
+                Builder(builder: (context) {
+                  final equivalences = const DemoStandardsRepository()
+                      .getEquivalencesForStandard(std.code);
+                  if (equivalences.isEmpty) return const SizedBox.shrink();
+                  return Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppColors.primaryContainer.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.public,
+                              size: 13,
+                              color: AppColors.primaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'CROSS-JURISDICTION EQUIVALENCES (${equivalences.length})',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primaryContainer,
+                                  letterSpacing: 0.5,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        ...equivalences.map((eq) {
+                          final target = eq.standardCodeA == std.code
+                              ? eq.standardCodeB
+                              : eq.standardCodeA;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 2,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  target,
+                                  style: AppTextStyles.code.copyWith(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 1,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.verifiedBg,
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                  child: Text(
+                                    eq.degree.displayName,
+                                    style: const TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.verifiedText,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '(${(eq.confidence * 100).toInt()}%)',
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  );
+                }),
                 const SizedBox(height: 10),
 
                 // Action Buttons: Why this standard, Explore in Graph & View Evidence

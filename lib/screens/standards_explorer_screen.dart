@@ -34,6 +34,7 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
 
   int _activeTabIndex = 0;
   String _activeFilter = 'ALL';
+  String _selectedJurisdiction = 'ALL';
   List<Standard> _displayedStandards = [];
   List<QcoOrder> _displayedQcoOrders = [];
   final Set<String> _selectedStandardCodesForComparison = {};
@@ -47,6 +48,36 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
     'CIVIL',
     'MECHANICAL',
   ];
+
+  final List<Map<String, String>> _jurisdictions = [
+    {'id': 'ALL', 'label': 'All Jurisdictions', 'flag': '🌍'},
+    {'id': 'IN', 'label': 'India (BIS)', 'flag': '🇮🇳'},
+    {'id': 'INT', 'label': 'International (ISO/IEC)', 'flag': '🌐'},
+    {'id': 'US', 'label': 'United States (ASTM/IEEE)', 'flag': '🇺🇸'},
+    {'id': 'EU', 'label': 'Europe (CEN/CENELEC)', 'flag': '🇪🇺'},
+    {'id': 'GB', 'label': 'United Kingdom (BSI)', 'flag': '🇬🇧'},
+  ];
+
+  static String _getJurisdictionFlag(String jurisdictionId) {
+    switch (jurisdictionId.toUpperCase()) {
+      case 'IN':
+        return '🇮🇳';
+      case 'INT':
+        return '🌐';
+      case 'US':
+        return '🇺🇸';
+      case 'EU':
+        return '🇪🇺';
+      case 'GB':
+        return '🇬🇧';
+      case 'DE':
+        return '🇩🇪';
+      case 'JP':
+        return '🇯🇵';
+      default:
+        return '🌍';
+    }
+  }
 
   void _toggleStandardComparison(String code) {
     setState(() {
@@ -87,7 +118,7 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
   @override
   void initState() {
     super.initState();
-    _displayedStandards = _repo.getAllStandards();
+    _displayedStandards = _repo.searchGlobalStandards();
     _displayedQcoOrders = _repo.getAllQcoOrders();
     _searchController.addListener(_onSearchChanged);
     _qcoSearchController.addListener(_onQcoSearchChanged);
@@ -104,9 +135,11 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
 
   void _onSearchChanged() {
     setState(() {
-      _displayedStandards = _repo.searchStandards(
+      _displayedStandards = _repo.searchGlobalStandards(
         query: _searchController.text,
         filter: _activeFilter,
+        jurisdictions:
+            _selectedJurisdiction == 'ALL' ? null : [_selectedJurisdiction],
       );
     });
   }
@@ -120,9 +153,23 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
   void _selectFilter(String filter) {
     setState(() {
       _activeFilter = filter;
-      _displayedStandards = _repo.searchStandards(
+      _displayedStandards = _repo.searchGlobalStandards(
         query: _searchController.text,
         filter: _activeFilter,
+        jurisdictions:
+            _selectedJurisdiction == 'ALL' ? null : [_selectedJurisdiction],
+      );
+    });
+  }
+
+  void _selectJurisdiction(String jId) {
+    setState(() {
+      _selectedJurisdiction = jId;
+      _displayedStandards = _repo.searchGlobalStandards(
+        query: _searchController.text,
+        filter: _activeFilter,
+        jurisdictions:
+            _selectedJurisdiction == 'ALL' ? null : [_selectedJurisdiction],
       );
     });
   }
@@ -236,7 +283,7 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'INDIAN STANDARD DETAILS',
+                        '${std.organizationId.toUpperCase()} STANDARD DETAILS',
                         style: AppTextStyles.pageEyebrow.copyWith(
                           color: AppColors.primary,
                         ),
@@ -295,6 +342,31 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(std.title, style: AppTextStyles.cardTitle.copyWith(fontSize: 14)),
+                  const SizedBox(height: 14),
+
+                  // Jurisdiction, Issuing Body & Family
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetaField(
+                          'JURISDICTION',
+                          '${_getJurisdictionFlag(std.jurisdictionId)} ${std.country} (${std.jurisdictionId})',
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildMetaField(
+                          'ISSUING BODY',
+                          '${std.organizationId.toUpperCase()} - ${std.issuingBody}',
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildMetaField(
+                          'FAMILY',
+                          std.standardFamily,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 14),
 
                   // Technical Division, Edition & Year
@@ -490,6 +562,153 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                     ),
                     const SizedBox(height: 14),
                   ],
+
+                  // International Equivalence & Harmonization
+                  Builder(builder: (context) {
+                    final equivalences = _repo.getEquivalencesForStandard(std.code);
+                    if (equivalences.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'INTERNATIONAL EQUIVALENCE & HARMONIZATION (${equivalences.length})',
+                          style: AppTextStyles.sectionEyebrow,
+                        ),
+                        const SizedBox(height: 6),
+                        ...equivalences.map((eq) {
+                          final otherCode = eq.standardCodeA == std.code
+                              ? eq.standardCodeB
+                              : eq.standardCodeA;
+                          final otherStd = _repo.getStandardByCode(otherCode);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: AppColors.primaryContainer.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.public,
+                                          size: 15,
+                                          color: AppColors.primaryContainer,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          otherCode,
+                                          style: AppTextStyles.cardTitle.copyWith(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primaryContainer,
+                                          ),
+                                        ),
+                                        if (otherStd != null) ...[
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _getJurisdictionFlag(otherStd.jurisdictionId),
+                                            style: const TextStyle(fontSize: 12),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.verifiedBg,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: AppColors.verifiedBorder),
+                                      ),
+                                      child: Text(
+                                        '${eq.degree.displayName.toUpperCase()} (${(eq.confidence * 100).toInt()}%)',
+                                        style: const TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.verifiedText,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (otherStd != null) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    otherStd.title,
+                                    style: AppTextStyles.caption.copyWith(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                                if (eq.differences.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Technical Differences:',
+                                    style: AppTextStyles.caption.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  ...eq.differences.map(
+                                    (diff) => Padding(
+                                      padding: const EdgeInsets.only(left: 4, bottom: 2),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            '• ',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              diff,
+                                              style: AppTextStyles.caption.copyWith(
+                                                fontSize: 10.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                if (eq.evidence != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Evidence: ${eq.evidence!.citation}',
+                                    style: AppTextStyles.caption.copyWith(
+                                      fontSize: 9.5,
+                                      fontStyle: FontStyle.italic,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 14),
+                      ],
+                    );
+                  }),
 
                   // Analytical Actions: Why this standard & What changed
                   Row(
@@ -750,6 +969,39 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                   }).toList(),
                 ),
               ),
+              const SizedBox(height: 8),
+
+              // Jurisdiction Filter Bar
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _jurisdictions.map((j) {
+                    final isSelected = _selectedJurisdiction == j['id'];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        avatar: Text(j['flag']!, style: const TextStyle(fontSize: 12)),
+                        label: Text(
+                          j['label']!,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: AppColors.primary,
+                        backgroundColor: AppColors.surfaceContainerLow,
+                        showCheckmark: false,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.primary : AppColors.outlineVariant,
+                        ),
+                        onSelected: (_) => _selectJurisdiction(j['id']!),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
             ],
           ),
         ),
@@ -764,10 +1016,10 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                     children: [
                       const Icon(Icons.search_off, size: 40, color: AppColors.outline),
                       const SizedBox(height: 10),
-                      Text('No Indian Standards found', style: AppTextStyles.cardTitle),
+                      Text('No Standards found', style: AppTextStyles.cardTitle),
                       const SizedBox(height: 4),
                       Text(
-                        'Try searching for "IS 1180", "Transformers", or "Pipes"',
+                        'Try searching for "IS 1180", "IEC 60076", "ASTM", or select another jurisdiction',
                         style: AppTextStyles.caption,
                       ),
                     ],
@@ -897,6 +1149,18 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                                   decoration: BoxDecoration(
                                     color: AppColors.surfaceContainerLow,
                                     borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: AppColors.outlineVariant),
+                                  ),
+                                  child: Text(
+                                    '${_getJurisdictionFlag(std.jurisdictionId)} ${std.organizationId.toUpperCase()}',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceContainerLow,
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
                                     std.division,
@@ -919,6 +1183,39 @@ class _StandardsExplorerScreenState extends State<StandardsExplorerScreen> {
                                       ),
                                     ),
                                   ),
+                                Builder(builder: (context) {
+                                  final eqList = _repo.getEquivalencesForStandard(std.code);
+                                  if (eqList.isEmpty) return const SizedBox.shrink();
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.sync_alt,
+                                          size: 10,
+                                          color: AppColors.primaryContainer,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          '${eqList.length} EQUIVALENCE${eqList.length > 1 ? 'S' : ''}',
+                                          style: const TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primaryContainer,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
                               ],
                             ),
                             const SizedBox(height: 10),

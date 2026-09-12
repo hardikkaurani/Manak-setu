@@ -514,6 +514,56 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
         icon = Icons.public;
         size = 70;
         break;
+      case GraphNodeType.organization:
+        bg = const Color(0xFF1E3A8A);
+        border = const Color(0xFF60A5FA);
+        icon = Icons.business_outlined;
+        size = 68;
+        break;
+      case GraphNodeType.jurisdiction:
+        bg = const Color(0xFF064E3B);
+        border = const Color(0xFF34D399);
+        icon = Icons.public;
+        size = 68;
+        break;
+      case GraphNodeType.regulation:
+        bg = const Color(0xFF581C87);
+        border = const Color(0xFFA855F7);
+        icon = Icons.policy_outlined;
+        size = 68;
+        break;
+      case GraphNodeType.certification:
+        bg = const Color(0xFF14532D);
+        border = const Color(0xFF22C55E);
+        icon = Icons.verified_user_outlined;
+        size = 68;
+        break;
+      case GraphNodeType.product:
+        bg = const Color(0xFF701A75);
+        border = const Color(0xFFE879F9);
+        icon = Icons.category_outlined;
+        size = 66;
+        break;
+      case GraphNodeType.clause:
+      case GraphNodeType.requirement:
+        bg = const Color(0xFF312E81);
+        border = const Color(0xFF818CF8);
+        icon = Icons.article_outlined;
+        size = 64;
+        break;
+      case GraphNodeType.amendment:
+      case GraphNodeType.edition:
+        bg = const Color(0xFF1F2937);
+        border = const Color(0xFF9CA3AF);
+        icon = Icons.history_outlined;
+        size = 64;
+        break;
+      default:
+        bg = const Color(0xFF1E293B);
+        border = const Color(0xFF94A3B8);
+        icon = Icons.hub_outlined;
+        size = 64;
+        break;
     }
 
     return Container(
@@ -627,6 +677,32 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
+          if (node.equivalenceDegree != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFB923C).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: const Color(0xFFFB923C)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.sync_alt, size: 12, color: Color(0xFFFB923C)),
+                  const SizedBox(width: 4),
+                  Text(
+                    node.equivalenceDegree!.displayName,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFFB923C),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -908,6 +984,12 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
         relationBg = AppColors.primary;
         relationFg = AppColors.onPrimary;
         icon = Icons.verified;
+        break;
+      default:
+        borderColor = AppColors.outlineVariant;
+        relationBg = AppColors.surfaceContainerLow;
+        relationFg = AppColors.textPrimary;
+        icon = Icons.hub_outlined;
         break;
     }
 

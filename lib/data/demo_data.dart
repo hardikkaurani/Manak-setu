@@ -15,6 +15,11 @@ import '../models/decision_trace.dart';
 import '../models/why_this_standard.dart';
 import '../models/amendment_diff.dart';
 import '../models/product_image_sample.dart';
+import '../models/jurisdiction.dart';
+import '../models/standards_organization.dart';
+import '../models/standard_family.dart';
+import '../models/international_equivalence.dart';
+import '../models/lifecycle_status.dart';
 
 /// Single source of truth for all canonical mock data in the ManakSetu demo.
 /// Strictly transcribed from `manaksetu_mock_data.md` and repo reference data
@@ -3675,5 +3680,664 @@ abstract final class DemoData {
       (sample) => sample.id == id,
       orElse: () => productImageSamples.first,
     );
+  }
+
+  // ==========================================
+  // GLOBAL JURISDICTIONS REGISTRY
+  // ==========================================
+  static const List<Jurisdiction> jurisdictions = [
+    Jurisdiction(
+      id: 'IN',
+      code: 'IN',
+      name: 'India',
+      region: 'South Asia',
+      flagEmoji: '🇮🇳',
+      defaultStandardsBodies: ['BIS'],
+      regulatoryBodies: ['DPIIT', 'Ministry of Power', 'Central Vigilance Commission (CVC)'],
+      certificationBodies: ['BIS Product Certification Scheme (ISI Mark)'],
+      standardFamilies: ['IS'],
+    ),
+    Jurisdiction(
+      id: 'INT',
+      code: 'INT',
+      name: 'International',
+      region: 'Global',
+      flagEmoji: '🌐',
+      defaultStandardsBodies: ['ISO', 'IEC', 'ITU'],
+      regulatoryBodies: ['World Trade Organization (TBT)', 'United Nations ECE'],
+      certificationBodies: ['IECEx', 'IECEE CB Scheme', 'ISO Conformity Assessment'],
+      standardFamilies: ['ISO', 'IEC', 'ISO/IEC', 'ITU-T'],
+    ),
+    Jurisdiction(
+      id: 'US',
+      code: 'US',
+      name: 'United States',
+      region: 'North America',
+      flagEmoji: '🇺🇸',
+      defaultStandardsBodies: ['ANSI', 'ASTM', 'IEEE', 'ASME', 'NFPA', 'UL'],
+      regulatoryBodies: ['OSHA', 'Department of Energy (DOE)', 'EPA', 'FDA'],
+      certificationBodies: ['UL Solutions', 'Intertek ETL', 'CSA US'],
+      standardFamilies: ['ASTM', 'ASME', 'IEEE', 'NFPA', 'UL', 'ANSI'],
+    ),
+    Jurisdiction(
+      id: 'EU',
+      code: 'EU',
+      name: 'European Union',
+      region: 'Europe',
+      flagEmoji: '🇪🇺',
+      defaultStandardsBodies: ['CEN', 'CENELEC', 'ETSI'],
+      regulatoryBodies: ['European Commission', 'DG GROW', 'DG ENER'],
+      certificationBodies: ['Notified Bodies under CE Marking / CPR / EcoDesign'],
+      standardFamilies: ['EN'],
+    ),
+    Jurisdiction(
+      id: 'GB',
+      code: 'GB',
+      name: 'United Kingdom',
+      region: 'Europe',
+      flagEmoji: '🇬🇧',
+      defaultStandardsBodies: ['BSI'],
+      regulatoryBodies: ['Health and Safety Executive (HSE)', 'BEIS / DBT'],
+      certificationBodies: ['BSI Kitemark', 'UKCA Approved Bodies'],
+      standardFamilies: ['BS', 'BS EN'],
+    ),
+    Jurisdiction(
+      id: 'DE',
+      code: 'DE',
+      name: 'Germany',
+      region: 'Europe',
+      flagEmoji: '🇩🇪',
+      defaultStandardsBodies: ['DIN', 'DKE'],
+      regulatoryBodies: ['BNetzA', 'BAuA'],
+      certificationBodies: ['TÜV', 'VDE'],
+      standardFamilies: ['DIN', 'DIN EN'],
+    ),
+    Jurisdiction(
+      id: 'JP',
+      code: 'JP',
+      name: 'Japan',
+      region: 'East Asia',
+      flagEmoji: '🇯🇵',
+      defaultStandardsBodies: ['JISC'],
+      regulatoryBodies: ['METI'],
+      certificationBodies: ['JQA (JIS Mark)'],
+      standardFamilies: ['JIS'],
+    ),
+  ];
+
+  static Jurisdiction? getJurisdiction(String id) {
+    try {
+      return jurisdictions.firstWhere(
+        (j) => j.id.toLowerCase() == id.toLowerCase() || j.code.toLowerCase() == id.toLowerCase(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ==========================================
+  // STANDARDS ORGANIZATIONS REGISTRY
+  // ==========================================
+  static const List<StandardsOrganization> standardsOrganizations = [
+    StandardsOrganization(
+      id: 'bis',
+      code: 'BIS',
+      name: 'Bureau of Indian Standards',
+      jurisdictionId: 'IN',
+      authorityType: 'National',
+      website: 'https://www.services.bis.gov.in',
+      standardsFamilies: ['IS'],
+      description: 'The National Standards Body of India established under the BIS Act 2016.',
+    ),
+    StandardsOrganization(
+      id: 'iso',
+      code: 'ISO',
+      name: 'International Organization for Standardization',
+      jurisdictionId: 'INT',
+      authorityType: 'International',
+      website: 'https://www.iso.org',
+      standardsFamilies: ['ISO', 'ISO/IEC'],
+      description: 'Independent, non-governmental international standard development organization comprising 170 national standards bodies.',
+    ),
+    StandardsOrganization(
+      id: 'iec',
+      code: 'IEC',
+      name: 'International Electrotechnical Commission',
+      jurisdictionId: 'INT',
+      authorityType: 'International',
+      website: 'https://www.iec.ch',
+      standardsFamilies: ['IEC', 'ISO/IEC'],
+      description: 'World leading organization preparing and publishing international standards for all electrical, electronic and related technologies.',
+    ),
+    StandardsOrganization(
+      id: 'astm',
+      code: 'ASTM',
+      name: 'ASTM International',
+      jurisdictionId: 'US',
+      authorityType: 'International',
+      website: 'https://www.astm.org',
+      standardsFamilies: ['ASTM'],
+      description: 'Globally recognized leader in the development and delivery of voluntary consensus standards for materials, products, systems, and services.',
+    ),
+    StandardsOrganization(
+      id: 'ieee',
+      code: 'IEEE',
+      name: 'Institute of Electrical and Electronics Engineers',
+      jurisdictionId: 'US',
+      authorityType: 'International',
+      website: 'https://standards.ieee.org',
+      standardsFamilies: ['IEEE'],
+      description: 'Leading developer of industry standards in a broad range of technologies including power, energy, computing, and telecommunications.',
+    ),
+    StandardsOrganization(
+      id: 'asme',
+      code: 'ASME',
+      name: 'American Society of Mechanical Engineers',
+      jurisdictionId: 'US',
+      authorityType: 'International',
+      website: 'https://www.asme.org',
+      standardsFamilies: ['ASME'],
+      description: 'Global standard development organization known for the Boiler and Pressure Vessel Code (BPVC) and piping specifications.',
+    ),
+    StandardsOrganization(
+      id: 'cen',
+      code: 'CEN',
+      name: 'European Committee for Standardization',
+      jurisdictionId: 'EU',
+      authorityType: 'Regional',
+      website: 'https://www.cencenelec.eu',
+      standardsFamilies: ['EN'],
+      description: 'Association that brings together the National Standardization Bodies of 34 European countries to foster the European Single Market.',
+    ),
+    StandardsOrganization(
+      id: 'cenelec',
+      code: 'CENELEC',
+      name: 'European Committee for Electrotechnical Standardization',
+      jurisdictionId: 'EU',
+      authorityType: 'Regional',
+      website: 'https://www.cencenelec.eu',
+      standardsFamilies: ['EN'],
+      description: 'European standardisation organization responsible for standardisation in the electrotechnical engineering field.',
+    ),
+    StandardsOrganization(
+      id: 'bsi',
+      code: 'BSI',
+      name: 'British Standards Institution',
+      jurisdictionId: 'GB',
+      authorityType: 'National',
+      website: 'https://www.bsigroup.com',
+      standardsFamilies: ['BS', 'BS EN'],
+      description: 'The national standards body of the United Kingdom, producing British Standards and Kitemark certifications.',
+    ),
+    StandardsOrganization(
+      id: 'jisc',
+      code: 'JISC',
+      name: 'Japanese Industrial Standards Committee',
+      jurisdictionId: 'JP',
+      authorityType: 'National',
+      website: 'https://www.jisc.go.jp',
+      standardsFamilies: ['JIS'],
+      description: 'National standards organization of Japan that coordinates Japanese Industrial Standards (JIS).',
+    ),
+  ];
+
+  // ==========================================
+  // STANDARDS FAMILIES REGISTRY
+  // ==========================================
+  static const List<StandardFamily> standardFamilies = [
+    StandardFamily(id: 'is', code: 'IS', defaultOrganizationId: 'bis', jurisdictionId: 'IN', description: 'Indian Standards issued by BIS'),
+    StandardFamily(id: 'iso', code: 'ISO', defaultOrganizationId: 'iso', jurisdictionId: 'INT', description: 'International Standards issued by ISO'),
+    StandardFamily(id: 'iec', code: 'IEC', defaultOrganizationId: 'iec', jurisdictionId: 'INT', description: 'International Electrotechnical Standards issued by IEC'),
+    StandardFamily(id: 'iso_iec', code: 'ISO/IEC', defaultOrganizationId: 'iso', jurisdictionId: 'INT', delimiter: ' ', description: 'Joint ISO/IEC technical standards'),
+    StandardFamily(id: 'astm', code: 'ASTM', defaultOrganizationId: 'astm', jurisdictionId: 'US', description: 'ASTM International consensus standards'),
+    StandardFamily(id: 'asme', code: 'ASME', defaultOrganizationId: 'asme', jurisdictionId: 'US', description: 'ASME mechanical and pressure vessel standards'),
+    StandardFamily(id: 'ieee', code: 'IEEE', defaultOrganizationId: 'ieee', jurisdictionId: 'US', description: 'IEEE electrical and electronics standards'),
+    StandardFamily(id: 'en', code: 'EN', defaultOrganizationId: 'cen', jurisdictionId: 'EU', description: 'European Harmonized Standards (CEN/CENELEC)'),
+    StandardFamily(id: 'bs', code: 'BS', defaultOrganizationId: 'bsi', jurisdictionId: 'GB', description: 'British Standards issued by BSI'),
+    StandardFamily(id: 'jis', code: 'JIS', defaultOrganizationId: 'jisc', jurisdictionId: 'JP', description: 'Japanese Industrial Standards'),
+  ];
+
+  // ==========================================
+  // INTERNATIONAL STANDARDS CATALOG
+  // ==========================================
+  static const List<Standard> internationalStandardsCatalog = [
+    // Transformer Domain
+    Standard(
+      code: 'IEC 60076-1:2011',
+      title: 'Power transformers — Part 1: General',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'INT',
+      organizationId: 'iec',
+      country: 'International',
+      region: 'Global',
+      standardFamily: 'IEC',
+      division: 'Power Systems & Electrotechnology',
+      scope:
+          'Applies to three-phase and single-phase power transformers (including distribution transformers). Specifies ratings, cooling classes, temperature rise limits, and routine tests.',
+      edition: 'Edition 3.0',
+      year: 2011,
+      relatedStandards: [
+        'IS 1180 (Part 1):2014',
+        'IEEE C57.12.00-2021',
+        'EN 50588-1:2017',
+      ],
+      testingMethods: [
+        'IEC 60076-2 (Temperature Rise)',
+        'IEC 60076-3 (Insulation Levels)',
+      ],
+      productCategories: [
+        'Distribution Transformers',
+        'Power Transformers',
+        'Electrical Equipment',
+      ],
+      technicalDomains: ['Electrotechnology', 'Power Distribution'],
+    ),
+    Standard(
+      code: 'IEEE C57.12.00-2021',
+      title:
+          'Standard for General Requirements for Liquid-Immersed Distribution, Power, and Regulating Transformers',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'US',
+      organizationId: 'ieee',
+      country: 'United States',
+      region: 'North America',
+      standardFamily: 'IEEE',
+      division: 'Power & Energy',
+      scope:
+          'Electrical, mechanical, and safety requirements for liquid-immersed transformers used on electric utility distribution systems.',
+      edition: '2021 Revision',
+      year: 2021,
+      relatedStandards: ['IS 1180 (Part 1):2014', 'IEC 60076-1:2011'],
+      testingMethods: [
+        'IEEE C57.12.90 (Test Code for Liquid-Immersed Transformers)',
+      ],
+      productCategories: [
+        'Distribution Transformers',
+        'Power Transformers',
+      ],
+      technicalDomains: ['Power & Energy', 'Electrical Utilities'],
+    ),
+    Standard(
+      code: 'EN 50588-1:2017',
+      title:
+          'Medium power transformers 50 Hz, with highest voltage for equipment not exceeding 36 kV — Part 1: General requirements',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'EU',
+      organizationId: 'cenelec',
+      country: 'European Union',
+      region: 'Europe',
+      standardFamily: 'EN',
+      division: 'Electrical Engineering',
+      scope:
+          'Applies to medium power transformers with highest voltage not exceeding 36 kV. Mandates maximum allowable losses under EU EcoDesign Directive 548/2014.',
+      edition: 'Consolidated Edition',
+      year: 2017,
+      relatedStandards: ['IS 1180 (Part 1):2014', 'IEC 60076-1:2011'],
+      regulatoryLinks: ['EU EcoDesign Regulation 548/2014'],
+      productCategories: [
+        'Distribution Transformers',
+        'Medium Power Transformers',
+      ],
+      technicalDomains: ['Energy Efficiency', 'EcoDesign'],
+    ),
+
+    // HDPE Pipe Domain
+    Standard(
+      code: 'ISO 4427-1:2019',
+      title:
+          'Plastics piping systems for water supply, and for drainage and sewerage under pressure — Polyethylene (PE) — Part 1: General',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'INT',
+      organizationId: 'iso',
+      country: 'International',
+      region: 'Global',
+      standardFamily: 'ISO',
+      division: 'Plastics Piping Systems',
+      scope:
+          'Specifies the general requirements for polyethylene (PE 80 and PE 100) piping systems for conveyance of water for human consumption.',
+      edition: 'Second Edition',
+      year: 2019,
+      relatedStandards: [
+        'IS 4984:2016',
+        'ISO 4427-2:2019',
+        'ASTM D3035-21',
+        'EN 12201-2:2011',
+      ],
+      testingMethods: [
+        'ISO 1167-1 (Internal Pressure Resistance)',
+        'ISO 6259 (Tensile Properties)',
+      ],
+      productCategories: [
+        'HDPE Pipes',
+        'Water Supply Pipes',
+        'Plastic Conduits',
+      ],
+      technicalDomains: ['Civil Engineering', 'Municipal Hydraulics'],
+    ),
+    Standard(
+      code: 'ASTM D3035-21',
+      title:
+          'Standard Specification for Polyethylene (PE) Plastic Pipe (DR-PR) Based on Controlled Outside Diameter',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'US',
+      organizationId: 'astm',
+      country: 'United States',
+      region: 'North America',
+      standardFamily: 'ASTM',
+      division: 'Plastics Piping Systems',
+      scope:
+          'Covers thermoplastic polyethylene pipe based on standard dimension ratios (SDR) and rated for water service.',
+      edition: '2021 Edition',
+      year: 2021,
+      relatedStandards: ['IS 4984:2016', 'ISO 4427-1:2019'],
+      testingMethods: [
+        'ASTM D1598 (Time-to-Failure of Plastic Pipe Under Constant Internal Pressure)',
+      ],
+      productCategories: ['HDPE Pipes', 'Thermoplastic Pipes'],
+      technicalDomains: ['Materials Testing', 'Water Transmission'],
+    ),
+    Standard(
+      code: 'EN 12201-2:2011+A1:2013',
+      title:
+          'Plastics piping systems for water supply, and for drainage and sewerage under pressure — Polyethylene (PE) — Part 2: Pipes',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'EU',
+      organizationId: 'cen',
+      country: 'European Union',
+      region: 'Europe',
+      standardFamily: 'EN',
+      division: 'Plastics Piping Systems',
+      scope:
+          'European harmonized standard for PE pipes under the Construction Products Regulation (CPR). Covers metric nominal diameters up to 2000 mm.',
+      edition: 'Amended Edition',
+      year: 2013,
+      amendments: ['A1:2013'],
+      relatedStandards: ['IS 4984:2016', 'ISO 4427-1:2019'],
+      productCategories: ['HDPE Pipes', 'Municipal Hydraulics'],
+      technicalDomains: ['Construction Products', 'Water Distribution'],
+    ),
+
+    // TMT Steel Rebar Domain
+    Standard(
+      code: 'ISO 6935-2:2019',
+      title: 'Steel for the reinforcement of concrete — Part 2: Ribbed bars',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'INT',
+      organizationId: 'iso',
+      country: 'International',
+      region: 'Global',
+      standardFamily: 'ISO',
+      division: 'Steel & Metallurgy',
+      scope:
+          'Technical requirements for ribbed bars of weldable steel used for the reinforcement of concrete structures in Grades B400, B500.',
+      edition: 'Third Edition',
+      year: 2019,
+      relatedStandards: [
+        'IS 1786:2008',
+        'ASTM A615/A615M-20',
+        'BS 4449:2005',
+      ],
+      testingMethods: ['ISO 15630-1 (Steel for reinforcement - Test methods)'],
+      productCategories: [
+        'TMT Steel Rebars',
+        'Reinforcement Steel',
+        'Construction Materials',
+      ],
+      technicalDomains: ['Structural Engineering', 'Metallurgy'],
+    ),
+    Standard(
+      code: 'ASTM A615/A615M-20',
+      title:
+          'Standard Specification for Deformed and Plain Carbon-Steel Bars for Concrete Reinforcement',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'US',
+      organizationId: 'astm',
+      country: 'United States',
+      region: 'North America',
+      standardFamily: 'ASTM',
+      division: 'Steel & Concrete Reinforcement',
+      scope:
+          'Covers deformed and plain billet-steel bars for concrete reinforcement in Grade 40 [280], Grade 60 [420], Grade 75 [520], Grade 80 [550], and Grade 100 [690].',
+      edition: '2020 Edition',
+      year: 2020,
+      relatedStandards: ['IS 1786:2008', 'ISO 6935-2:2019'],
+      testingMethods: ['ASTM A370 (Mechanical Testing of Steel Products)'],
+      productCategories: ['TMT Steel Rebars', 'Structural Reinforcement'],
+      technicalDomains: ['Civil Infrastructure', 'Materials Science'],
+    ),
+    Standard(
+      code: 'BS 4449:2005+A3:2016',
+      title:
+          'Steel for the reinforcement of concrete — Weldable reinforcing steel — Bar, coil and decoiled product — Specification',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'GB',
+      organizationId: 'bsi',
+      country: 'United Kingdom',
+      region: 'Europe',
+      standardFamily: 'BS',
+      division: 'Civil Engineering Materials',
+      scope:
+          'Requirements for ribbed weldable reinforcing steel bars, coils and decoiled products in Grade B500A, B500B, and B500C.',
+      edition: 'Amended Edition',
+      year: 2016,
+      amendments: ['A1:2009', 'A2:2013', 'A3:2016'],
+      relatedStandards: ['IS 1786:2008', 'ISO 6935-2:2019'],
+      productCategories: ['TMT Steel Rebars', 'Reinforcing Steel'],
+      technicalDomains: ['Civil Engineering', 'Structural Concrete'],
+    ),
+
+    // Quality & IT Management
+    Standard(
+      code: 'ISO 9001:2015',
+      title: 'Quality management systems — Requirements',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'INT',
+      organizationId: 'iso',
+      country: 'International',
+      region: 'Global',
+      standardFamily: 'ISO',
+      division: 'Management Systems',
+      scope:
+          'Specifies requirements for a quality management system when an organization needs to demonstrate its ability to consistently provide products and services that meet customer and statutory requirements.',
+      edition: 'Fifth Edition',
+      year: 2015,
+      relatedStandards: ['ISO 14001:2015', 'ISO 45001:2018'],
+      productCategories: ['Management Systems', 'Quality Assurance'],
+      technicalDomains: ['Quality Assurance', 'Corporate Governance'],
+    ),
+    Standard(
+      code: 'ISO/IEC 27001:2022',
+      title:
+          'Information security, cybersecurity and privacy protection — Information security management systems — Requirements',
+      status: 'CURRENT',
+      lifecycleStatus: StandardLifecycleStatus.current,
+      jurisdictionId: 'INT',
+      organizationId: 'iso',
+      country: 'International',
+      region: 'Global',
+      standardFamily: 'ISO/IEC',
+      division: 'Information Technology & Cybersecurity',
+      scope:
+          'Specifies the requirements for establishing, implementing, maintaining and continually improving an information security management system (ISMS).',
+      edition: 'Third Edition',
+      year: 2022,
+      relatedStandards: ['ISO/IEC 27002:2022'],
+      productCategories: [
+        'Cybersecurity',
+        'IT Governance',
+        'Cloud Infrastructure',
+      ],
+      technicalDomains: ['Information Technology', 'Data Protection'],
+    ),
+  ];
+
+  /// Comprehensive combined global catalog (Indian Standards + International Standards).
+  static List<Standard> get allGlobalStandardsCatalog => [
+        ...allStandardsCatalog,
+        ...internationalStandardsCatalog,
+      ];
+
+  // ==========================================
+  // INTERNATIONAL EQUIVALENCE REGISTRY
+  // ==========================================
+  static const List<InternationalEquivalence> internationalEquivalences = [
+    // Transformer Equivalence
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 1180 (Part 1):2014',
+      targetStandardCode: 'IEC 60076-1:2011',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'INT',
+      degree: EquivalenceDegree.technicallyAligned,
+      confidence: 0.95,
+      comparisonSummary:
+          'IS 1180 (Part 1) adopts core ratings and temperature rise limits from IEC 60076-1, incorporating statutory maximum energy loss ceilings (BEE star ratings) adapted for Indian tropical ambient of 50°C.',
+      keyDifferences: [
+        'Ambient temperature design baseline: 50°C (IS) vs 40°C (IEC)',
+        'Mandatory BEE energy efficiency star-1 to star-5 loss ceilings',
+        'Standard distribution voltage levels: 11 kV / 22 kV / 33 kV',
+      ],
+      evidence: Evidence(
+        standardCode: 'IS 1180 (Part 1):2014',
+        clause: 'Foreword Cl. 0.4 / IEC Harmonization Note',
+        page: '2',
+        sourceFile: '1180_part1_2014_amd4.pdf',
+        textExcerpt:
+            'This standard is based on IEC 60076-1:2011 with modifications for Indian tropical environmental conditions.',
+      ),
+    ),
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 1180 (Part 1):2014',
+      targetStandardCode: 'IEEE C57.12.00-2021',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'US',
+      degree: EquivalenceDegree.partialCorrespondence,
+      confidence: 0.85,
+      comparisonSummary:
+          'Both govern liquid-immersed distribution transformers. IEEE C57 is engineered for North American 60 Hz grids with ANSI standard voltages (e.g. 12.47Y/7.2 kV), whereas IS 1180 is strictly 50 Hz metric distribution.',
+      keyDifferences: [
+        'Grid frequency: 50 Hz (IS) vs 60 Hz (IEEE)',
+        'Standard test codes: IS 2026 vs IEEE C57.12.90',
+        'Bushing mounting and terminal configurations follow ANSI vs DIN/metric norms',
+      ],
+    ),
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 1180 (Part 1):2014',
+      targetStandardCode: 'EN 50588-1:2017',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'EU',
+      degree: EquivalenceDegree.technicallyAligned,
+      confidence: 0.90,
+      comparisonSummary:
+          'Both standards enforce statutory energy efficiency ceilings (EU EcoDesign Tier 2 vs India BEE Star-Level losses) for 50 Hz medium power transformers up to 36 kV.',
+      keyDifferences: [
+        'EU EcoDesign Tier 2 loss capitalisation formula vs Indian BEE star level bands',
+        'Noise level testing protocols adhere to EN vs IS sound measurement norms',
+      ],
+    ),
+
+    // HDPE Pipe Equivalence
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 4984:2016',
+      targetStandardCode: 'ISO 4427-1:2019',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'INT',
+      degree: EquivalenceDegree.adoptedVersion,
+      confidence: 0.98,
+      comparisonSummary:
+          'IS 4984:2016 is a modified national adoption of ISO 4427, featuring harmonized PE-80 / PE-100 material classifications, standard dimension ratios (SDR), and minimum required strength (MRS) metrics.',
+      keyDifferences: [
+        'Standard test temperature reference: 27°C (IS) vs 20°C (ISO)',
+        'Carbon black dispersion test protocol includes specific regional test apparatus',
+      ],
+    ),
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 4984:2016',
+      targetStandardCode: 'ASTM D3035-21',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'US',
+      degree: EquivalenceDegree.partialCorrespondence,
+      confidence: 0.85,
+      comparisonSummary:
+          'Both standards govern polyethylene pressure water pipe using SDR series, but ASTM D3035 is dimensioned in IPS (Iron Pipe Size) inches while IS 4984 is strictly metric outer diameter (OD in mm). Direct interchange requires transitional adapters.',
+      keyDifferences: [
+        'Dimensioning: Metric outer diameter in mm (IS) vs IPS nominal inches (ASTM)',
+        'Resin cell classification follows ASTM D3350 vs ISO MRS designation',
+      ],
+    ),
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 4984:2016',
+      targetStandardCode: 'EN 12201-2:2011+A1:2013',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'EU',
+      degree: EquivalenceDegree.technicallyAligned,
+      confidence: 0.92,
+      comparisonSummary:
+          'Harmonized in metric nominal diameters, PE material designations, and hydrostatic design stresses for potable water distribution under pressure.',
+      keyDifferences: [
+        'Harmonized CE marking under European CPR vs Indian ISI Mark under Pipes QCO',
+      ],
+    ),
+
+    // TMT Rebar Equivalence
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 1786:2008',
+      targetStandardCode: 'ISO 6935-2:2019',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'INT',
+      degree: EquivalenceDegree.technicallyAligned,
+      confidence: 0.94,
+      comparisonSummary:
+          'IS 1786 Fe 500D corresponds directly to ISO 6935-2 Grade B500DWR in yield strength (500 MPa), tensile-to-yield ratio (>= 1.10), and uniform elongation requirements for seismic ductility.',
+      keyDifferences: [
+        'Rib geometry and relative rib area (fR) calculation methods have minor regional calibration differences',
+      ],
+    ),
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 1786:2008',
+      targetStandardCode: 'ASTM A615/A615M-20',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'US',
+      degree: EquivalenceDegree.partialCorrespondence,
+      confidence: 0.88,
+      comparisonSummary:
+          'ASTM A615 Grade 60 [420] and Grade 75 [520] cover carbon steel reinforcement. However, for seismic and high-ductility structures, ASTM A706 is the appropriate equivalent to IS 1786 Fe 500D; ASTM A615 alone lacks mandatory tensile-to-yield ratio caps.',
+      keyDifferences: [
+        'ASTM A615 does not cap the maximum tensile-to-yield ratio required for seismic energy dissipation',
+        'Bar numbering: US bar sizes (#3 through #18) vs metric diameter in mm (8mm to 40mm)',
+      ],
+    ),
+    InternationalEquivalence(
+      sourceStandardCode: 'IS 1786:2008',
+      targetStandardCode: 'BS 4449:2005+A3:2016',
+      sourceJurisdictionId: 'IN',
+      targetJurisdictionId: 'GB',
+      degree: EquivalenceDegree.technicallyAligned,
+      confidence: 0.95,
+      comparisonSummary:
+          'IS 1786 Fe 500D aligns with BS 4449 Grade B500B/B500C in mechanical yield criteria (500 MPa) and total elongation at maximum force (Agt).',
+      keyDifferences: [
+        'BS 4449 classifies ductility classes A, B, C; IS 1786 uses D (Ductile) suffix',
+      ],
+    ),
+  ];
+
+  static List<InternationalEquivalence> getEquivalencesForStandard(String standardCode) {
+    final clean = standardCode.trim().toLowerCase();
+    return internationalEquivalences.where((eq) {
+      return eq.sourceStandardCode.toLowerCase().contains(clean) ||
+          eq.targetStandardCode.toLowerCase().contains(clean) ||
+          clean.contains(eq.sourceStandardCode.toLowerCase()) ||
+          clean.contains(eq.targetStandardCode.toLowerCase());
+    }).toList();
   }
 }

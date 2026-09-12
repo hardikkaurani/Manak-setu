@@ -27,4 +27,7 @@ class Evidence {
     if (page != null) parts.add('Page $page');
     return parts.join(' · ');
   }
+
+  /// Alias for citationDisplay
+  String get citation => citationDisplay;
 }
