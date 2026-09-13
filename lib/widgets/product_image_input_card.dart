@@ -346,7 +346,6 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
                       border: Border.all(color: AppColors.outlineVariant),
                     ),
                     child: Text(
-                      sample.category.split(' ').first,
                       label,
                       style: const TextStyle(fontSize: 10, color: AppColors.primary),
                     ),
@@ -569,8 +568,6 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
           ),
           const SizedBox(height: 14),
 
-          // 4. Extracted Summary or Fallback Card
-          if (_selectedSample.isSupported) ...[
           // 4. Extracted Summary or Fallback Card or Mismatch Card
           if (_mismatchResult != null) ...[
             _buildMismatchResultCard(_mismatchResult!),
@@ -589,7 +586,6 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
               key: const Key('analyze_product_button'),
               label: 'ANALYZE APPLICABLE STANDARDS',
               icon: Icons.shield_outlined,
-              onPressed: () => widget.onAnalyzeProduct(_selectedSample),
               isLoading: _isAnalyzing,
               onPressed: _handleAnalyze,
             ),
@@ -640,8 +636,6 @@ class _ProductImageInputCardState extends State<ProductImageInputCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,

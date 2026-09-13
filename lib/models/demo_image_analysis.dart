@@ -70,7 +70,6 @@ class DemoImageAnalysis {
     bool forceMismatch = false,
   }) {
     final rawName = fileName?.trim() ?? 'unknown_image.jpg';
-    final isMatch = isCompliantImage(rawName);
     final isMatch = !forceMismatch && isCompliantImage(rawName);
 
     if (isMatch) {
