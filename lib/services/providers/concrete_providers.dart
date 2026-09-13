@@ -393,6 +393,27 @@ class JisStandardsProvider implements StandardsProvider {
 
 /// Central registry mapping jurisdictions, organizations, and families to active providers.
 class StandardsProviderRegistry {
+  static final StandardsProviderRegistry _instance = StandardsProviderRegistry();
+  static StandardsProviderRegistry get instance => _instance;
+  static List<StandardsProvider> get allRegisteredProviders => _instance._providers.values.toList();
+
+  static StandardsProvider? getProvider(String orgOrId) {
+    return _instance.getProviderById(orgOrId) ?? _instance.getProviderForOrganization(orgOrId);
+  }
+
+  static StandardsProvider? getProviderForStandard(String standardCode) {
+    final code = standardCode.toUpperCase();
+    if (code.startsWith('IS ') || code.startsWith('IS-')) return _instance.getProviderForOrganization('bis');
+    if (code.startsWith('ISO ') || code.startsWith('ISO-') || code.startsWith('ISO/')) return _instance.getProviderForOrganization('iso');
+    if (code.startsWith('IEC ') || code.startsWith('IEC-')) return _instance.getProviderForOrganization('iec');
+    if (code.startsWith('ASTM ') || code.startsWith('ASTM-')) return _instance.getProviderForOrganization('astm');
+    if (code.startsWith('IEEE ') || code.startsWith('IEEE-')) return _instance.getProviderForOrganization('ieee');
+    if (code.startsWith('BS ') || code.startsWith('BS-')) return _instance.getProviderForOrganization('bsi');
+    if (code.startsWith('EN ') || code.startsWith('CEN')) return _instance.getProviderForOrganization('cen');
+    if (code.startsWith('JIS ') || code.startsWith('JIS-')) return _instance.getProviderForOrganization('jisc');
+    return _instance.getProviderForOrganization('bis');
+  }
+
   final Map<String, StandardsProvider> _providers = {};
 
   StandardsProviderRegistry() {
@@ -429,4 +450,5 @@ class StandardsProviderRegistry {
   }
 
   List<StandardsProvider> get allProviders => _providers.values.toList();
+  List<StandardsProvider> get providers => _providers.values.toList();
 }

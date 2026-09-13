@@ -1,6 +1,7 @@
 import '../models/standard.dart';
 import '../models/lifecycle_status.dart';
 import '../models/international_equivalence.dart';
+import '../data/demo_data.dart';
 
 /// Structured, explainable rationale for every recommended standard.
 ///
@@ -127,6 +128,29 @@ class HybridRetrievalEngine {
   static const double weightStatus = 0.15;
   static const double weightRegulatory = 0.15;
   static const double weightEvidence = 0.10;
+
+  /// Convenience static runner for candidate retrieval and multi-factor re-ranking.
+  static List<StandardRecommendation> retrieveCandidates(
+    String queryText, {
+    String? targetJurisdiction,
+    String? productCategory,
+    int limit = 5,
+  }) {
+    const engine = HybridRetrievalEngine();
+    final query = RetrievalQuery.from(
+      rawText: queryText,
+      jurisdictions: targetJurisdiction != null ? [targetJurisdiction] : const [],
+      productCategory: productCategory,
+    );
+    return engine
+        .retrieve(
+          query: query,
+          catalog: DemoData.allGlobalStandardsCatalog,
+          equivalences: DemoData.internationalEquivalences,
+        )
+        .take(limit)
+        .toList();
+  }
 
   /// Executes jurisdiction-aware hybrid retrieval against a candidate catalog.
   List<StandardRecommendation> retrieve({

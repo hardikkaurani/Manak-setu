@@ -78,11 +78,23 @@ class ProcurementRequirement {
 
   @override
   String toString() => '$parameter ${op.symbol} $value${unit != null ? " $unit" : ""} [${requirementType.displayName}]';
+
+  /// Raw tender clause or formatted text snippet.
+  String get rawClauseText => sourceClause ?? toString();
 }
 
 /// Parser that converts specification snippets into structured ProcurementRequirement entities.
 class RequirementOntologyParser {
   const RequirementOntologyParser();
+
+  /// Decomposes general specification text into structured requirements.
+  static List<ProcurementRequirement> parseText(
+    String clauseText, {
+    String domain = 'general',
+    String product = 'general',
+  }) {
+    return parseClauseSnippet(domain: domain, product: product, clauseText: clauseText);
+  }
 
   /// Decomposes raw clause sentences into structured requirement entities.
   static List<ProcurementRequirement> parseClauseSnippet({
